@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Phase 0 MapLibre probe</title><style>#map{width:600px;height:400px;max-width:100%}button:focus-visible{outline:3px solid #1259a0}</style></head>
+<body>
+  <h1>Phase 0 synthetic map probe</h1>
+  <div id="map" role="img" aria-label="合成地点の地図"></div>
+  <p id="status" role="status">地図を初期化しています</p>
+  <h2>地点一覧</h2>
+  <ul id="points"></ul>
+  <p id="selection" role="status">地点未選択</p>
+  <script type="module" src="./map.ts"></script>
+</body>
+</html>

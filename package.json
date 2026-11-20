@@ -1,0 +1,41 @@
+{
+  "name": "photo-route-local",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.6.2",
+  "engines": {
+    "node": ">=24.13.0 <25"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "build": "tsc --noEmit && vite build",
+    "fixtures:generate": "python tools/generate_fixtures.py",
+    "fixtures:check": "python tools/generate_fixtures.py --check && python tools/verify_fixtures.py",
+    "fixtures:generate:heif": "python tools/generate_heif_fixtures.py",
+    "fixtures:check:heif": "python tools/generate_heif_fixtures.py --check && python tools/verify_heif_fixtures.py"
+  },
+  "dependencies": {
+    "exifreader": "4.54.0",
+    "fflate": "0.8.3",
+    "maplibre-gl": "6.18.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.1",
+    "@su-engineering/heic": "0.3.0",
+    "eslint": "10.15.0",
+    "exifr": "7.1.3",
+    "heic-to": "1.6.7",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  },
+  "license": "MIT"
+}

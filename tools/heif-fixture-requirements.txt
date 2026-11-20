@@ -1,0 +1,4 @@
+# Isolated tooling for generated HEIC/HEIF test images only.
+# No package from this file is a web-app/runtime dependency.
+Pillow==12.3.0
+pillow-heif==1.8.1

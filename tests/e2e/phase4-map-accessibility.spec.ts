@@ -1,0 +1,37 @@
+import { expect, test } from '@playwright/test';
+
+test('the map location index reaches Photo and Visit markers by keyboard and follows layer visibility', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#header-manage').click();
+  await page.locator('#trip-name').fill('Keyboard map trial');
+  await page.getByRole('button', { name: '旅行を作成' }).click();
+  await page.locator('#manage-import').click();
+  await page.locator('#photo-files').setInputFiles('fixtures/generated/jpeg_gps_offset_orientation6.jpg');
+  await page.locator('#import-button').click();
+  await expect(page.locator('#photo-list button')).toHaveCount(1);
+  await page.locator('#management-close').click();
+  await page.locator('#left-tab-visits').click();
+  await page.locator('#visit-create-from-list').click();
+  await page.locator('#visit-label').fill('Keyboard Visit');
+  await page.locator('#visit-latitude').fill('32.73');
+  await page.locator('#visit-longitude').fill('129.87');
+  await page.locator('#visit-save').click();
+  await expect(page.locator('#visit-list button')).toHaveCount(1);
+  await page.locator('#map-tools > summary').click();
+  await page.locator('#map-marker-index summary').click();
+  await expect(page.locator('#map-marker-list button')).toHaveCount(1);
+  const photoButton = page.locator('#map-marker-list button[data-marker-kind="photo"]');
+  await photoButton.focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('#photo-detail h3')).toHaveText('jpeg_gps_offset_orientation6.jpg');
+  await expect(photoButton).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#map-mode-visits').click();
+  await expect(page.locator('#map-marker-list button')).toHaveCount(1);
+  const visitButton = page.locator('#map-marker-list button[data-marker-kind="visit"]');
+  await visitButton.focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('#visit-summary')).toContainText('Keyboard Visit');
+  await expect(visitButton).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#map-mode-photo').click();
+  await expect(page.locator('#map-marker-list button')).toHaveCount(1);
+  await expect(page.locator('#map-marker-list button').first()).toContainText('写真: jpeg_gps_offset_orientation6.jpg');
+  await expect(page.locator('#basemap-toggle')).not.toBeChecked();
+});

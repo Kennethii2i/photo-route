@@ -1,0 +1,261 @@
+{
+  "additionalFixtureManifest": "fixtures/heif/manifest.json",
+  "files": [
+    {
+      "byteLength": 1056,
+      "expected": {
+        "decode": "expected",
+        "expectedUtc": "2020-02-02T19:05:06Z",
+        "gps": {
+          "horizontalErrorMeters": 7.5,
+          "latitude": 35.5,
+          "longitude": 139.5
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 6,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_gps_offset_orientation6.jpg",
+      "sha256": "62a578a0a3d4465bbd7ce6b30ba0a4aa4113999d3e108657a269a6946721e310"
+    },
+    {
+      "byteLength": 882,
+      "expected": {
+        "decode": "expected",
+        "expectedUtc": null,
+        "gps": null,
+        "localClock": "2020:02:03 04:05:06",
+        "offset": null,
+        "orientation": 1,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_local_no_offset.jpg",
+      "sha256": "bd65624f25c5cb5425ced3b62b87a79946a2045c5efba91370fc37058a9b9942"
+    },
+    {
+      "byteLength": 882,
+      "expected": {
+        "decode": "expected",
+        "expectedUtc": null,
+        "gps": null,
+        "localClock": "2020:02:03 04:05:06",
+        "offset": null,
+        "orientation": 2,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_orientation2_flip.jpg",
+      "sha256": "933467791bd92aa10c4cf2b6d93e257f881defa1f58e9f25488586581b92ef92"
+    },
+    {
+      "byteLength": 1056,
+      "expected": {
+        "decode": "expected",
+        "gps": {
+          "latitude": 95.5,
+          "longitude": 139.5,
+          "valid": false
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 1,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_invalid_gps.jpg",
+      "sha256": "2c4e46992c12fc49caaa5928157b5b077d70bc7b759e344e95201bec166c7d5f"
+    },
+    {
+      "byteLength": 1036,
+      "expected": {
+        "decode": "expected",
+        "gps": {
+          "horizontalErrorMeters": null,
+          "latitude": 35.5,
+          "longitude": 139.5
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 1,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_gps_no_accuracy.jpg",
+      "sha256": "258ab08cd2073c32934e75f330a6e82b65db8ecd377951d9eefa9ff9532d26e1"
+    },
+    {
+      "byteLength": 1056,
+      "expected": {
+        "decode": "expected",
+        "gps": {
+          "latitude": 0,
+          "longitude": 0,
+          "valid": true
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 1,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_zero_zero.jpg",
+      "sha256": "6f2bd4c2785a61a2a686672c7f6aaff0c42e37ade8761fb738ea4c4b96d15383"
+    },
+    {
+      "byteLength": 1036,
+      "expected": {
+        "decode": "expected",
+        "gps": {
+          "datum": null,
+          "latitude": 35.5,
+          "longitude": 139.5
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 1,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_gps_no_datum.jpg",
+      "sha256": "ffd90a9a1b8a9fb4596a29a17ad58a80bd5e392e95baf9c2cb75285a493dc95a"
+    },
+    {
+      "byteLength": 1054,
+      "expected": {
+        "decode": "expected",
+        "gps": {
+          "datum": "TOKYO",
+          "latitude": 35.5,
+          "longitude": 139.5
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 1,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_gps_non_wgs84.jpg",
+      "sha256": "a6f64bdf89675b3bfa5e77e9340c8f2fa3e5ae788e94a6de24330b551d0fff5c"
+    },
+    {
+      "byteLength": 1036,
+      "expected": {
+        "decode": "expected",
+        "gps": {
+          "datum": null,
+          "latitude": -35.5,
+          "longitude": -139.5
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 1,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_gps_southwest_no_datum.jpg",
+      "sha256": "309a5fc8f0c7fe775b0f1cc35417ca4b2e0dcebfd25bc91e78148065e3fef984"
+    },
+    {
+      "byteLength": 1036,
+      "expected": {
+        "decode": "expected",
+        "gps": {
+          "datum": null,
+          "latitude": 0,
+          "longitude": 0
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 1,
+        "signature": "JPEG"
+      },
+      "file": "jpeg_zero_zero_no_datum.jpg",
+      "sha256": "1b2225dcaab64015342542e4795ffe5c292b34792c3754e85e628cc48b8459d5"
+    },
+    {
+      "byteLength": 102,
+      "expected": {
+        "decode": "expected",
+        "gps": null,
+        "localClock": null,
+        "signature": "PNG"
+      },
+      "file": "png_no_metadata.png",
+      "sha256": "6dfa09afc85e4ba80a37e0a4a0bdc5a048b9b6e92dd72b8a35e972d0cec10109"
+    },
+    {
+      "byteLength": 346,
+      "expected": {
+        "decode": "expected",
+        "expectedUtc": "2020-02-02T19:05:06Z",
+        "gps": {
+          "horizontalErrorMeters": 7.5,
+          "latitude": 35.5,
+          "longitude": 139.5
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 6,
+        "signature": "PNG"
+      },
+      "file": "png_exif_gps.png",
+      "sha256": "2505139fcc5adfbc67eb1913003170deb2548153aaa4a57a1e1f125c95f4ed17"
+    },
+    {
+      "byteLength": 74,
+      "expected": {
+        "decode": "expected",
+        "gps": null,
+        "localClock": null,
+        "signature": "WebP"
+      },
+      "file": "webp_no_metadata.webp",
+      "sha256": "483a3d1f0d6eb87dd806b47548e7d85b0f1e6bfd369c9329293b3c493425b6ea"
+    },
+    {
+      "byteLength": 332,
+      "expected": {
+        "decode": "expected",
+        "expectedUtc": "2020-02-02T19:05:06Z",
+        "gps": {
+          "horizontalErrorMeters": 7.5,
+          "latitude": 35.5,
+          "longitude": 139.5
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "offset": "+09:00",
+        "orientation": 6,
+        "signature": "WebP"
+      },
+      "file": "webp_exif_gps.webp",
+      "sha256": "4bdaad54ca5cec7e1860cb2238b4c12b66fb196bc49934f25bd12638c2370e0d"
+    },
+    {
+      "byteLength": 12,
+      "expected": {
+        "decode": "must fail",
+        "purpose": "truncated input",
+        "signature": "JPEG"
+      },
+      "file": "jpeg_truncated.jpg",
+      "sha256": "8c4d5adde3563515ad00637a3f3f3a85a8800ddff8f7a61c4547db94c4f9f96e"
+    },
+    {
+      "byteLength": 102,
+      "expected": {
+        "declaredDimensions": [
+          50000,
+          50000
+        ],
+        "decode": "do not attempt",
+        "purpose": "preflight dimensions only; body is inconsistent",
+        "signature": "PNG"
+      },
+      "file": "png_oversized_header.png",
+      "sha256": "aac591a66795f134795eb908e9410aa07d8691ea93c256ce6667273ecaa5500e"
+    }
+  ],
+  "generator": "tools/generate_fixtures.py",
+  "generatorRequirements": {
+    "Pillow": "10.4.0",
+    "python": "3.12"
+  },
+  "missingRequiredFormats": [],
+  "schemaVersion": 1,
+  "source": "synthetic pixels and metadata generated in this repository",
+  "thirdPartyImageLicense": "not applicable: no third-party images"
+}

@@ -1,0 +1,56 @@
+{
+  "encoderFormat": "HEIF container with HEVC image coding; verify independently",
+  "files": [
+    {
+      "byteLength": 995,
+      "expected": {
+        "codec": "HEVC (hvc1 with hvcC)",
+        "decodedDimensionsAfterTransform": [
+          12,
+          16
+        ],
+        "expectedUtcIfOffsetAccepted": "2020-02-02T19:05:06Z",
+        "fileType": "image/heic",
+        "gps": {
+          "horizontalErrorMeters": 7.5,
+          "latitude": 35.5,
+          "longitude": 139.5
+        },
+        "localClock": "2020:02:03 04:05:06",
+        "majorBrand": "heic",
+        "offset": "+09:00",
+        "pillowPluginOrientationAfterTransform": 1,
+        "rawExifOrientation": 6
+      },
+      "file": "synthetic_gps_offset_orientation.heic",
+      "sha256": "b8420bd1771ff23fa81e56281288e50ac19f8f1ee6ac17923e5fc94bd3a10b15"
+    },
+    {
+      "byteLength": 678,
+      "expected": {
+        "codec": "HEVC (hvc1 with hvcC)",
+        "decodedDimensionsAfterTransform": [
+          16,
+          12
+        ],
+        "fileType": "image/heic",
+        "gps": null,
+        "localClock": null,
+        "majorBrand": "heic",
+        "offset": null,
+        "pillowPluginOrientationAfterTransform": null,
+        "rawExifOrientation": null
+      },
+      "file": "synthetic_no_metadata.heif",
+      "sha256": "c4b14a79126512b1f8493cd2abe7a5b17d07e73550e327f3673dce746a824693"
+    }
+  ],
+  "generatorRequirements": {
+    "Pillow": "12.3.0",
+    "Python": "3.12",
+    "pillow-heif": "1.8.1"
+  },
+  "schemaVersion": 1,
+  "source": "fully synthetic pixels and metadata from tools/generate_heif_fixtures.py; no device-origin photos",
+  "thirdPartyImageLicense": "not applicable: no third-party images"
+}

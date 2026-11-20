@@ -1,0 +1,63 @@
+{
+  "files": [
+    {
+      "byteLength": 198840,
+      "expected": {
+        "exifOrientation": 6,
+        "format": "JPEG",
+        "height": 3024,
+        "pixels": 12192768,
+        "thumbnail": "available",
+        "width": 4032
+      },
+      "file": "jpeg_12mp_orientation6.jpg",
+      "sha256": "8418663c9cbec293130f61163fcf85e625543b616b1fe1e38512b633d9213ca1"
+    },
+    {
+      "byteLength": 383040,
+      "expected": {
+        "exifOrientation": null,
+        "format": "JPEG",
+        "height": 4000,
+        "pixels": 24000000,
+        "thumbnail": "available",
+        "width": 6000
+      },
+      "file": "jpeg_24mp.jpg",
+      "sha256": "5145ea66fd0cd212b4d62122f8129d7ced512697d8b2f71c38eac934b6a2f70b"
+    },
+    {
+      "byteLength": 765867,
+      "expected": {
+        "exifOrientation": null,
+        "format": "JPEG",
+        "height": 6000,
+        "pixels": 48000000,
+        "thumbnail": "available",
+        "width": 8000
+      },
+      "file": "jpeg_48mp.jpg",
+      "sha256": "6ee5e8b74ae4c3a3114bfcba295820b1e2301467398f36a49c1f4f2f86f01490"
+    },
+    {
+      "byteLength": 1265431,
+      "expected": {
+        "exifOrientation": null,
+        "format": "JPEG",
+        "height": 8000,
+        "pixels": 80000000,
+        "thumbnail": "failed",
+        "width": 10000
+      },
+      "file": "jpeg_80mp_metadata_only.jpg",
+      "sha256": "d96baedb3239c6fd70e83ee5c7f99099b84d19fa615ae17ed18aa42823b7aa09"
+    }
+  ],
+  "generator": "tools/generate_camera_jpeg_fixtures.py",
+  "license": "repository-generated synthetic data; no third-party asset",
+  "requirements": {
+    "Pillow": "12.3.0",
+    "python": "3.12.7"
+  },
+  "source": "synthetic four-quadrant pixels; no real photo or GPS"
+}
