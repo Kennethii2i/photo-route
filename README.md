@@ -1,27 +1,89 @@
 # Photo Route
 
-旅行写真を地図で見返し、同じ旅行内のアルバムへ自由にまとめる、ブラウザ内で動くローカルファーストのWebアプリです。現在はローカル試用段階で、GitHub/Pagesへの公開は未実施です。
+旅行写真を地図で見返し、同じ旅行内の写真をアルバムへまとめるWebアプリです。写真の情報はブラウザ内に保存します。
 
-## 主な機能
+以下は、Web公開サイトを使わず、**自分のPCで起動して試す手順**です。ソースをダウンロードしただけでは起動しません。`index.html`を直接開くのではなく、下記のコマンドで起動します。
 
-- 旅行を作成・選択して写真を取り込み、SHA-256で完全一致の重複を判定。
-- 日付別写真一覧、ファイル名/撮影日/GPS/アルバムの検索・絞り込み。
-- 写真プレビュー/詳細、元情報と分離したGPS・日時補正。
-- 同じ写真を同一旅行の複数アルバムへ所属。空アルバムも利用可能。
-- MapLibre/OpenFreeMap、クラスタ直接タップで拡大、同一地点写真の展開、アルバム限定地図。
-- 写真選択時はズーム維持と必要パン。PC左drawer、モバイル下部3タブ。
-- 削除前確認とごみ箱復元、ZIP v2バックアップ/復元（旧v1読み込み互換）。
+## 1. 最初に用意するもの
 
-## 開発環境
+- WindowsのPowerShellなど、コマンドを入力できる画面。
+- Node.js 24.13以上・25未満。確認済み環境はNode.js 24.13.0 / npm 11.6.2です。
+- Chromeなどのブラウザ。最初は試用専用の新しいプロファイルを使ってください。
+- GitHubから取得する場合はGit。Privateリポジトリの場合はアクセス権のあるGitHubアカウントも必要です。
 
-Node.js 24.13.0（engines: 24.13以上25未満）、npm 11.6.2。リポジトリルートで実行します。
+PowerShellで次が表示できれば、Node.jsとnpmを使えます。
 
 ```powershell
-npm ci --registry=https://registry.npmjs.org/
+node --version
+npm --version
+```
+
+## 2. ソースを取得する
+
+保存したいフォルダでPowerShellを開き、実行します。GitHubからの認証を求められた場合は、アクセス権のあるアカウントで認証してください。
+
+```powershell
+git clone https://github.com/Kennethii2i/photo-route.git
+cd photo-route
+```
+
+すでにソースがある場合は、**package.jsonがあるフォルダ**でPowerShellを開いて、次へ進みます。GitHubから「Download ZIP」で取得した場合も、先に展開してそのフォルダを開きます。
+
+## 3. 起動してブラウザで開く
+
+初回だけ、必要なライブラリを準備します。
+
+```powershell
+npm ci
+```
+
+続けて起動します。
+
+```powershell
 npm run dev -- --host 127.0.0.1 --port 18194 --strictPort
 ```
 
-18194は例です。未使用を確認し、専用Chromeプロファイル/合成データを使ってください。既存の試用環境や通常ブラウザのデータを無断で操作しません。
+PowerShellに起動完了のURLが出たら、ブラウザで **http://127.0.0.1:18194/** を開いてください。PowerShellは起動したままにします。
+
+18194は試用ポートの例です。使用中というエラーが出た場合は、別の未使用ポートへ変更し、ブラウザで開くURLの番号も合わせます。既存の試用環境のポートや通常利用中の保存先を再利用しないでください。
+
+## 4. 最初に試す操作
+
+新しいブラウザの保存領域では、旅行も写真も空の状態から始まります。
+
+1. **旅行を作る**：上部の旅行選択欄から「＋ 新しい旅行を作成」を選び、名前を入力して「作成」。
+2. **写真一覧を開く**：PCでは地図左端の矢印で一覧を開き、「写真」タブを選びます。モバイルでは下部の「写真」タブです。
+3. **写真を追加する**：写真枚数の右にある「＋」→「写真を選択」→ファイルを選ぶ→「取り込む」。
+4. **写真を地図で見る**：取り込み後に写真を選ぶとプレビューが開きます。GPS付き写真は地図にも表示されます。GPSがない写真も一覧から閲覧できます。
+5. **アルバムを作る**：「アルバム」タブの「＋」から名前を入力して作成し、「写真を選択」で追加したい写真を選んで保存します。1枚を複数アルバムに入れられます。
+
+実写真を使わずに確認する場合は、ファイル選択画面で、このリポジトリ内の次の合成画像を選べます。
+
+- `fixtures/generated/jpeg_gps_offset_orientation6.jpg`：GPS・日時付き。
+- `fixtures/generated/png_exif_gps.png`：GPS・日時付き。
+- `fixtures/generated/webp_no_metadata.webp`：GPS・日時なし。
+
+これらは操作確認用の小さな図形画像です。fixturesには意図的な破損画像・過大寸法画像もあるため、最初は上の正常な画像だけを選んでください。
+
+## 5. 終了と次回の起動
+
+終了するときは、起動中のPowerShellで **Ctrl+C** を押します。ブラウザを閉じるだけではサーバーは終了しません。
+
+次回は同じフォルダで起動コマンドをもう一度実行します。ライブラリやロックファイルに変更がなければ、`npm ci`のやり直しは不要です。
+
+写真・アルバムを続けて使う場合は、**同じブラウザのプロファイルと、同じURL（ポート番号も含む）**で開きます。サーバーを終了しても、ブラウザの保存領域を消さなければデータは残ります。ただしブラウザ内保存は独立バックアップではありません。
+
+## データと地図について
+
+- **元の高解像度写真は保存されません。** アプリとバックアップZIPが保持するのは、サムネイル・写真情報・補正・アルバム所属などです。原本は別途保管してください。
+- 写真やアルバムはGit/GitHubへ自動保存されません。管理画面からZIPバックアップを作成し、別の環境へ移すときは復元します。
+- ブラウザ・プロファイル・ホスト・ポート・HTTPSが変わると、同じ写真データは自動では表示されません。
+- 背景地図は起動時にOpenFreeMapへ通信します。閲覧地域や通信情報が提供者/CDNへ伝わり得ます。写真やExifをアップロードする機能ではありません。[プライバシー仕様](docs/specification/SECURITY_PRIVACY.md)を確認してください。
+- HEIC/HEIFのサムネイル生成、原本ビューア、自動同期、手動カバー保存等は未対応です。最初の取り込み確認にはJPEG/PNG/WebPを使ってください。[既知の制約](docs/specification/KNOWN_LIMITATIONS.md)も参照できます。
+
+## 開発・仕様書
+
+試用後にコードを変更する場合は、[CONTRIBUTING](CONTRIBUTING.md)と[AGENTS](AGENTS.md)を読み、**[正式仕様書の入口](docs/specification/INDEX.md)**から対象機能を確認してください。
 
 ```powershell
 npm run typecheck
@@ -29,26 +91,12 @@ npm run lint
 npm run build
 ```
 
-単体/E2Eの選択と実行方法は[TESTING](docs/specification/TESTING.md)、新規参加者の手順は[DEVELOPMENT](docs/specification/DEVELOPMENT.md)へ。
+試験の選び方は[TESTING](docs/specification/TESTING.md)、開発環境の詳細は[DEVELOPMENT](docs/specification/DEVELOPMENT.md)へ。内部Undoは保持していますが、一般利用者向けのUndo UIはありません。
 
-## データについて
+## ライセンス・公開準備
 
-保存するのはメタデータ・手動補正・サムネイル・ハッシュ・所属等です。**元の高解像度写真はDBにもZIPにも保存されません。** 原本を別途保管してください。新規取り込みは旅行必須ですが、アルバム未所属は許可します。
+本体コードは[MIT License](LICENSE)です。著作権表記の「2026 Photo Route contributors」は暫定表記で、Public化前に所有者の最終確認が必要です。第三者ライブラリ・地図・素材にはそれぞれの条件があります。[第三者通知](THIRD_PARTY_NOTICES.md)を確認してください。
 
-保存先はIndexedDB v3です。ブラウザ/プロファイル/オリジン（ホスト・ポート・HTTPS）が変わると同じDBは自動共有されません。公開サイトへ移る場合もZIPで移行します。更新前のバックアップと空の別環境での復元確認を推奨します。
-
-背景地図は起動時にOpenFreeMapへ通信します。閲覧地域や通信情報が提供者/CDNへ伝わり得ます。写真やExifをアップロードする機能ではありません。[SECURITY_PRIVACY](docs/specification/SECURITY_PRIVACY.md)を確認してください。
-
-## 仕様と開発参加
-
-**[正式仕様書の入口](docs/specification/INDEX.md)**から製品・モデル・保存・地図・UI・復旧を確認できます。[CONTRIBUTING](CONTRIBUTING.md)、[AGENTS](AGENTS.md)に変更と検証のルールがあります。過去の私有検証報告・画面画像は公開版へ含めず、現行ソースとテストを参照します。
-
-## 制約・公開状況
-
-HEIC/HEIFサムネイル、原本ビューア、自動同期、手動カバー保存等は未対応。内部Undoは保持していますが一般Undo UIはありません。実機/他ブラウザ/低メモリー環境の全面保証はありません。[既知の制約](docs/specification/KNOWN_LIMITATIONS.md)を参照してください。
-
-Photo Route本体のコードは[MIT License](LICENSE)です。著作権表記の「2026 Photo Route contributors」は暫定表記で、GitHub公開前に所有者の最終確認が必要です。第三者ライブラリ・地図・素材にはそれぞれの条件があります。[THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)を確認してください。
-
-このディレクトリは過去の履歴・未承認画像を含まない独立した公開準備版です。公開前の確認事項と今回の検証は[PUBLICATION_REVIEW](docs/specification/PUBLICATION_REVIEW.md)へ。[Pages準備案](docs/specification/GITHUB_PAGES.md)は非稼働で、Pushによる自動公開を設定していません。
+このリポジトリは過去の履歴・未承認画像を含まない独立した公開準備版です。[公開前の確認事項](docs/specification/PUBLICATION_REVIEW.md)と[Pages準備案](docs/specification/GITHUB_PAGES.md)を分けて記録しています。ローカルで起動する手順を実行しても、GitHub Pagesへの公開は行われません。
 
 記載の確認元実装Git HEAD: `989eae47f3ae96fa557b97eb5d7cb63e47e77f9e`
