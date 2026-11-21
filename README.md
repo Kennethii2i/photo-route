@@ -91,9 +91,9 @@ npm test
 npm run build
 ```
 
-代表E2Eは、未使用ポートと隔離ブラウザを用意してから、例えば`$env:PHOTO_ROUTE_TEST_PORT='18194'; npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line`（PowerShell）で実行します。macOS/Linuxでは`PHOTO_ROUTE_TEST_PORT=18194 npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line`です。ChromiumのChromeチャンネルが必要です。詳細と試験選択は[TESTING](docs/specification/TESTING.md)を参照してください。Pull Requestと`main`へのPushでは、GitHub Actionsが上の5コマンド（`npm ci`を含む）を実行します。E2EはCIの標準ジョブには含めていません。
+代表E2Eは、`npx playwright install chromium`で専用ブラウザを導入し、未使用ポートで実行します。PowerShellでは`$env:PHOTO_ROUTE_TEST_BROWSER='chromium'; $env:PHOTO_ROUTE_TEST_PORT='18198'; npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line`、macOS/Linuxでは`PHOTO_ROUTE_TEST_BROWSER=chromium PHOTO_ROUTE_TEST_PORT=18198 npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line`です。[TESTING](docs/specification/TESTING.md)に隔離条件を記載しています。Pull Requestと`main`へのPushでは、GitHub Actionsが`npm ci`、上の4コマンド、公開安全性検査、代表E2Eを実行します。
 
-環境構築で困ったら、`node --version`と`npm --version`を確認してください。`npm ci`がlockfile不整合で止まった場合は、作業ツリーを確認し、依存変更を意図した人が`package.json`と`package-lock.json`を揃えてコミットします。ポート使用中なら未使用ポートに変えます。Playwrightがブラウザを見つけられない場合はChromeを導入するか、[TESTING](docs/specification/TESTING.md)に従い別ブラウザを指定します。地図タイルが表示されない場合はネットワークとOpenFreeMapへの接続を確認してください。内部Undoは保持していますが、一般利用者向けのUndo UIはありません。
+環境構築で困ったら、`node --version`と`npm --version`を確認してください。`npm ci`がlockfile不整合で止まった場合は、作業ツリーを確認し、依存変更を意図した人が`package.json`と`package-lock.json`を揃えてコミットします。ポート使用中なら未使用ポートに変えます。Playwrightがブラウザを見つけられない場合は`npx playwright install chromium`を実行し、[TESTING](docs/specification/TESTING.md)でブラウザ指定を確認してください。地図タイルが表示されない場合はネットワークとOpenFreeMapへの接続を確認してください。内部Undoは保持していますが、一般利用者向けのUndo UIはありません。
 
 ## ライセンス・公開状況
 

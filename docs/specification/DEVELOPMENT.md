@@ -20,7 +20,26 @@ npm run build
 
 試験範囲は[TESTING](TESTING.md)で選びます。`preview`というnpm scriptはありません。ビルド成果物の確認には導入済みVite CLIの`npx vite preview --host 127.0.0.1 --port 18195 --strictPort`を使えます。これも未使用ポートと隔離ブラウザが必要で、本番配信サーバーではありません。
 
-Pull Requestと`main`へのPushでは[CI](../../.github/workflows/ci.yml)が`npm ci`、型チェック、Lint、単体テスト、ビルドを実行します。E2E、Pagesデプロイ、実データを用いる検証は含みません。
+Pull Requestと`main`へのPushでは[CI](../../.github/workflows/ci.yml)が`npm ci`、型チェック、Lint、単体テスト、ビルド、公開安全性検査、合成データだけの代表E2Eを実行します。Pagesデプロイと実データを用いる検証は含みません。
+
+## 公開監査と通常開発
+
+- `python tools/check_public_safety.py`：**現在の公開候補**を検査します。Gitの追跡ファイルと、通常の`git add`で追加可能な未追跡ファイルを対象に、配置、既知の資格情報形式・個人用パス、禁止拡張子、サイズ、画像の[SAFE_ASSETS.csv](SAFE_ASSETS.csv)への登録とハッシュ、`.gitignore`の重要な除外方針を確認します。安全なソースや`.github`の新規ワークフロー・テンプレートは追加できます。ステージ前とコミット前に実行し、CIでも実行します。新しい合成画像を公開する場合は由来を人が確認し、SAFE_ASSETSの一覧とハッシュを更新します。
+- `python tools/check_public_snapshot.py`：**初回公開の由来**を検査します。[SOURCE_MANIFEST.json](SOURCE_MANIFEST.json)の190ハッシュを、独立した初回公開コミット`f8d0c34`のGit blobに照合します。現在のコードとは照合しません。履歴全体があるクローンで実行してください。過去のハッシュや[公開時記録](PUBLICATION_REVIEW.md)を書き換えるためのコマンドではありません。
+
+[PUBLIC_FILES.txt](../../PUBLIC_FILES.txt)は過去の公開ファイル一覧で、通常開発の固定許可リストには使いません。現在の公開候補はGitの追跡状態で決まり、`git status`と`git diff --cached --name-only`で確認します。静的な安全性検査は未知の秘密形式、画像内部の個人情報、ライセンス上の許諾を完全には証明しません。公開前に差分と素材の由来を人が確認してください。
+
+## main保護の推奨設定（所有者がGitHubで実施）
+
+2026年11月21日の確認では、公開`main`は保護されておらず、Rulesetsは0件でした。公開リポジトリのブランチ保護はGitHub Freeでも利用できます。所有者のadmin権限は確認できましたが、契約プラン名はこの公開情報からは確認できません。以下は[GitHub公式の設定手順](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule)に沿った、個人開発でも運用できる最小案です。設定はこの文書の変更だけでは有効になりません。
+
+1. リポジトリの **Settings → Branches → Add branch protection rule** を開き、branch name patternを`main`にする。
+2. **Require a pull request before merging**を有効にする。**Require approvals**は有効にしない。PR作成者は自分のPRを承認できないため、必須承認を1件にすると単独所有者が統合できなくなります。レビューは依頼でき、未解決の会話は次のルールで扱います。
+3. **Require status checks to pass before merging**を有効にし、既存のGitHub Actionsチェック`quality`を選ぶ。今回の代表E2Eと公開安全性検査も同じjob内に含まれます。チェック名を変えた場合は保護設定も更新する。
+4. **Require conversation resolution before merging**を有効にする。**Allow force pushes**と**Allow deletions**は有効にしない。**Do not allow bypassing the above settings**を有効にし、所有者もPRとCIを通す。署名必須・merge queue・必須レビュー件数は現在の規模では設定しない。
+5. 設定を保存し、テスト用PRで`quality`成功後に所有者が統合でき、失敗時や未解決会話では統合できないことをGitHub上で確認する。CI障害で作業が止まった場合は、所有者が設定を見直して復旧する。
+
+この方針は[GitHubの保護ルールの説明](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)と[自分のPRを承認できない制約](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/approving-a-pull-request-with-required-reviews)を踏まえています。CIが一度も実行されていない新規チェックは選択候補に出ない場合があるため、まずPhase 2のPRで`quality`を実行してから設定します。
 
 ## 最初に読むもの
 
