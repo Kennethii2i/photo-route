@@ -271,6 +271,7 @@ third-party/licenses/@types__esrecurse/LICENSE
 third-party/licenses/@types__estree/LICENSE
 third-party/licenses/@types__geojson/LICENSE
 third-party/licenses/@types__json-schema/LICENSE
+third-party/licenses/@types__node/LICENSE
 third-party/licenses/@typescript-eslint__eslint-plugin/LICENSE
 third-party/licenses/@typescript-eslint__eslint-plugin__node_modules__ignore/LICENSE-MIT
 third-party/licenses/@typescript-eslint__parser/LICENSE
@@ -388,6 +389,7 @@ third-party/licenses/tslib/LICENSE.txt
 third-party/licenses/type-check/LICENSE
 third-party/licenses/typescript-eslint/LICENSE
 third-party/licenses/typescript/LICENSE.txt
+third-party/licenses/undici-types/LICENSE
 third-party/licenses/uri-js/LICENSE
 third-party/licenses/vite/LICENSE.md
 third-party/licenses/vitest/LICENSE.md

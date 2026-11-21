@@ -4,7 +4,7 @@ Photo Route本体のコードは[MIT](LICENSE)です。この許諾は、権利�
 
 ## npmソフトウェア
 
-[全193件の版・ライセンス・配布元・完全性ハッシュ・通知元](third-party/DEPENDENCIES.json)と[簡易一覧](docs/specification/DEPENDENCIES.csv)を同梱しています。npm ciで導入した165パッケージの通知原文/抽出元をthird-party/licensesに保存しました。Windowsで導入されなかった28件は他プラットフォーム等の任意依存で、ソース/バイナリを本リポジトリへコピーしていません。各版の公式取得先はJSONとpackage-lockにあります。
+[全195件の版・ライセンス・配布元・完全性ハッシュ・通知元](third-party/DEPENDENCIES.json)と[簡易一覧](docs/specification/DEPENDENCIES.csv)を同梱しています。npm ciで導入した167パッケージの通知原文/抽出元をthird-party/licensesに保存しました。Windowsで導入されなかった28件は他プラットフォーム等の任意依存で、ソース/バイナリを本リポジトリへコピーしていません。各版の公式取得先はJSONとpackage-lockにあります。
 
 | 本番の直接依存 | 条件・通知 | 対応するソース |
 |---|---|---|

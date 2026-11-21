@@ -59,6 +59,7 @@ node_modules/@types/esrecurse,4.3.1,MIT,開発
 node_modules/@types/estree,1.0.10,MIT,開発
 node_modules/@types/geojson,7946.0.16,MIT,本番扱い
 node_modules/@types/json-schema,7.0.15,MIT,開発
+node_modules/@types/node,24.19.2,MIT,開発
 node_modules/@typescript-eslint/eslint-plugin,8.73.0,MIT,開発
 node_modules/@typescript-eslint/eslint-plugin/node_modules/ignore,7.0.14,MIT,開発
 node_modules/@typescript-eslint/parser,8.73.0,MIT,開発
@@ -184,6 +185,7 @@ node_modules/tslib,2.9.1,0BSD,開発
 node_modules/type-check,0.4.0,MIT,開発
 node_modules/typescript,6.0.3,Apache-2.0,開発
 node_modules/typescript-eslint,8.73.0,MIT,開発
+node_modules/undici-types,7.24.6,MIT,開発
 node_modules/uri-js,4.4.1,BSD-2-Clause,開発
 node_modules/vite,8.3.8,MIT,開発
 node_modules/vitest,5.1.0,MIT,開発
