@@ -4,7 +4,7 @@
 
 ## 読む順序
 
-初参加者は PRODUCT → ARCHITECTURE → DEVELOPMENT → DATA_MODEL → STORAGE_AND_BACKUP を読み、変更対象の機能文書とTESTINGへ進んでください。AIエージェントは先にルートの[AGENTS.md](../../AGENTS.md)を読みます。
+初参加者はルートの[README](../../README.md)で環境を作り、[CONTRIBUTING](../../CONTRIBUTING.md)と[AGENTS](../../AGENTS.md)で共同開発ルールを確認します。仕様は PRODUCT → ARCHITECTURE → DEVELOPMENT → DATA_MODEL → STORAGE_AND_BACKUP の順に読み、変更対象の機能文書とTESTINGへ進んでください。
 
 | 文書 | 用途 |
 |---|---|
@@ -22,7 +22,7 @@
 | [DEVELOPMENT](DEVELOPMENT.md) | 開発開始、ブランチ、仕様更新手順 |
 | [KNOWN_LIMITATIONS](KNOWN_LIMITATIONS.md) | 制約、未実装、未確認、過去資料との相違 |
 | [CHANGELOG](CHANGELOG.md) | 保存形式・機能・操作体系の重要な変更 |
-| [PUBLICATION_REVIEW](PUBLICATION_REVIEW.md) | 独立公開版の選別・検証と公開前の確認事項 |
+| [PUBLICATION_REVIEW](PUBLICATION_REVIEW.md) | 独立公開版の選別・公開時の検証記録と残課題 |
 | [SAFE_ASSETS](SAFE_ASSETS.md) / [全件CSV](SAFE_ASSETS.csv) | 同梱する23合成fixtureの由来・ハッシュ |
 | [第三者通知](../../THIRD_PARTY_NOTICES.md) | MIT本体と第三者ソフトウェア・地図の条件 |
 | [GITHUB_PAGES](GITHUB_PAGES.md) | 公開していないPages準備案と確認手順 |

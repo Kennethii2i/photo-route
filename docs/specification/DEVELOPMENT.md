@@ -2,10 +2,10 @@
 
 ## 環境とコマンド
 
-[.nvmrc](../../.nvmrc)はNode.js 24.13.0、[package.json](../../package.json)のenginesは`>=24.13.0 <25`、packageManagerはnpm 11.6.2です。新しい開発環境ではリポジトリルートで実行します。
+[.nvmrc](../../.nvmrc)はNode.js 24.13.0、[package.json](../../package.json)のenginesは`>=24.13.0 <25`、packageManagerはnpm 11.6.2です。公開GitHubリポジトリをクローンし、リポジトリルートで実行します。Windows PowerShellとmacOS/Linuxの基本手順は[README](../../README.md)、ブランチ・Fork・PRは[CONTRIBUTING](../../CONTRIBUTING.md)を参照してください。
 
 ```powershell
-npm ci --registry=https://registry.npmjs.org/
+npm ci
 npm run dev -- --host 127.0.0.1 --port 18194 --strictPort
 ```
 
@@ -19,6 +19,8 @@ npm run build
 ```
 
 試験範囲は[TESTING](TESTING.md)で選びます。`preview`というnpm scriptはありません。ビルド成果物の確認には導入済みVite CLIの`npx vite preview --host 127.0.0.1 --port 18195 --strictPort`を使えます。これも未使用ポートと隔離ブラウザが必要で、本番配信サーバーではありません。
+
+Pull Requestと`main`へのPushでは[CI](../../.github/workflows/ci.yml)が`npm ci`、型チェック、Lint、単体テスト、ビルドを実行します。E2E、Pagesデプロイ、実データを用いる検証は含みません。
 
 ## 最初に読むもの
 

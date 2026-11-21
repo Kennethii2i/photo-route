@@ -2,42 +2,41 @@
 
 旅行写真を地図で見返し、同じ旅行内の写真をアルバムへまとめるWebアプリです。写真の情報はブラウザ内に保存します。
 
-以下は、Web公開サイトを使わず、**自分のPCで起動して試す手順**です。ソースをダウンロードしただけでは起動しません。`index.html`を直接開くのではなく、下記のコマンドで起動します。
+ソースコードは[GitHubで公開](https://github.com/Kennethii2i/photo-route)されています。GitHub Pagesで動くWebアプリは公開されていません。以下は自分のPCで起動し、開発する手順です。`index.html`を直接開かず、開発サーバーを使います。
+
+技術スタックはTypeScript（strict）、Vite、MapLibre GL、IndexedDBです。単体テストはVitest、ブラウザテストはPlaywrightを使います。写真・アルバムはブラウザ内に保存し、GitHubへ自動同期しません。
 
 ## 1. 最初に用意するもの
 
-- WindowsのPowerShellなど、コマンドを入力できる画面。
-- Node.js 24.13以上・25未満。確認済み環境はNode.js 24.13.0 / npm 11.6.2です。
+- Git、Node.js **24.13.0**（[.nvmrc](.nvmrc)、許容範囲は`>=24.13.0 <25`）、npm **11.6.2**（[package.json](package.json)）。
+- WindowsではPowerShell、macOS/Linuxではターミナル。
 - Chromeなどのブラウザ。最初は試用専用の新しいプロファイルを使ってください。
-- GitHubから取得する場合はGit。Privateリポジトリの場合はアクセス権のあるGitHubアカウントも必要です。
 
 PowerShellで次が表示できれば、Node.jsとnpmを使えます。
 
 ```powershell
 node --version
 npm --version
+git --version
 ```
 
 ## 2. ソースを取得する
 
-保存したいフォルダでPowerShellを開き、実行します。GitHubからの認証を求められた場合は、アクセス権のあるアカウントで認証してください。
+保存したいフォルダでPowerShellを開き、実行します。公開リポジトリのクローンにはGitHubの認証は不要です。
 
 ```powershell
 git clone https://github.com/Kennethii2i/photo-route.git
 cd photo-route
-```
-
-すでにソースがある場合は、**package.jsonがあるフォルダ**でPowerShellを開いて、次へ進みます。GitHubから「Download ZIP」で取得した場合も、先に展開してそのフォルダを開きます。
-
-## 3. 起動してブラウザで開く
-
-初回だけ、必要なライブラリを準備します。
-
-```powershell
 npm ci
 ```
 
-続けて起動します。
+macOS/Linuxでもターミナルで同じ`git clone`、`cd photo-route`、`npm ci`を実行します。Nodeの切り替えにnvmを使う場合は、`npm ci`の前に`nvm install`と`nvm use`を実行します。WindowsではNode 24.13.0とnpm 11.6.2をインストールしてからPowerShellを開き直してください。
+
+すでにソースがある場合は、**package.jsonがあるフォルダ**でコマンドを実行します。ZIP取得でも起動はできますが、ブランチ・Push・Pull RequestにはGitクローンを使います。既存の作業ツリーに未コミット変更があれば、そのまま上書きしないでください。
+
+## 3. 起動してブラウザで開く
+
+依存関係はロックファイルに従って`npm ci`で導入します。続けて起動します。
 
 ```powershell
 npm run dev -- --host 127.0.0.1 --port 18194 --strictPort
@@ -83,20 +82,23 @@ PowerShellに起動完了のURLが出たら、ブラウザで **http://127.0.0.1
 
 ## 開発・仕様書
 
-試用後にコードを変更する場合は、[CONTRIBUTING](CONTRIBUTING.md)と[AGENTS](AGENTS.md)を読み、**[正式仕様書の入口](docs/specification/INDEX.md)**から対象機能を確認してください。
+開発に参加する場合は[CONTRIBUTING](CONTRIBUTING.md)でブランチ・Fork・Pull Requestの手順を読み、[AGENTS](AGENTS.md)、[正式仕様書の入口](docs/specification/INDEX.md)へ進んでください。変更前に対象機能の仕様を確認します。
 
 ```powershell
 npm run typecheck
 npm run lint
+npm test
 npm run build
 ```
 
-試験の選び方は[TESTING](docs/specification/TESTING.md)、開発環境の詳細は[DEVELOPMENT](docs/specification/DEVELOPMENT.md)へ。内部Undoは保持していますが、一般利用者向けのUndo UIはありません。
+代表E2Eは、未使用ポートと隔離ブラウザを用意してから、例えば`$env:PHOTO_ROUTE_TEST_PORT='18194'; npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line`（PowerShell）で実行します。macOS/Linuxでは`PHOTO_ROUTE_TEST_PORT=18194 npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line`です。ChromiumのChromeチャンネルが必要です。詳細と試験選択は[TESTING](docs/specification/TESTING.md)を参照してください。Pull Requestと`main`へのPushでは、GitHub Actionsが上の5コマンド（`npm ci`を含む）を実行します。E2EはCIの標準ジョブには含めていません。
 
-## ライセンス・公開準備
+環境構築で困ったら、`node --version`と`npm --version`を確認してください。`npm ci`がlockfile不整合で止まった場合は、作業ツリーを確認し、依存変更を意図した人が`package.json`と`package-lock.json`を揃えてコミットします。ポート使用中なら未使用ポートに変えます。Playwrightがブラウザを見つけられない場合はChromeを導入するか、[TESTING](docs/specification/TESTING.md)に従い別ブラウザを指定します。地図タイルが表示されない場合はネットワークとOpenFreeMapへの接続を確認してください。内部Undoは保持していますが、一般利用者向けのUndo UIはありません。
 
-本体コードは[MIT License](LICENSE)です。著作権表記の「2026 Photo Route contributors」は暫定表記で、Public化前に所有者の最終確認が必要です。第三者ライブラリ・地図・素材にはそれぞれの条件があります。[第三者通知](THIRD_PARTY_NOTICES.md)を確認してください。
+## ライセンス・公開状況
 
-このリポジトリは過去の履歴・未承認画像を含まない独立した公開準備版です。[公開前の確認事項](docs/specification/PUBLICATION_REVIEW.md)と[Pages準備案](docs/specification/GITHUB_PAGES.md)を分けて記録しています。ローカルで起動する手順を実行しても、GitHub Pagesへの公開は行われません。
+本体コードは[MIT License](LICENSE)です。著作権表記の「2026 Photo Route contributors」は暫定表記のため、所有者の最終確認が残っています。第三者ライブラリ・地図・素材にはそれぞれの条件があります。[第三者通知](THIRD_PARTY_NOTICES.md)を確認してください。
+
+このリポジトリは過去の非公開履歴・未承認画像を含まない独立した公開版です。[公開時の選別記録](docs/specification/PUBLICATION_REVIEW.md)は当時の記録として保持しています。[Pages準備案](docs/specification/GITHUB_PAGES.md)はWeb公開に向けた未実施の案です。ローカル起動やCIによってPages公開は行われません。
 
 記載の確認元実装Git HEAD: `989eae47f3ae96fa557b97eb5d7cb63e47e77f9e`

@@ -15,7 +15,7 @@ ROOT_FILES = {
     'THIRD_PARTY_NOTICES.md', 'PUBLIC_FILES.txt', 'eslint.config.js', 'index.html',
     'package.json', 'package-lock.json', 'playwright.config.ts', 'tsconfig.json', 'vite.config.ts',
 }
-PREFIXES = ('src/', 'tests/', 'spikes/', 'fixtures/', 'tools/', 'docs/', 'third-party/')
+PREFIXES = ('src/', 'tests/', 'spikes/', 'fixtures/', 'tools/', 'docs/', 'third-party/', '.github/workflows/')
 IGNORED = {'.git', 'node_modules', 'dist', '.validation', 'specs', 'test-results',
            'playwright-report', 'coverage', '.vite', '__pycache__'}
 
@@ -49,7 +49,13 @@ def check():
         assert hashlib.sha256((ROOT / row['path']).read_bytes()).hexdigest() == row['sha256']
     manifest = json.loads((ROOT / 'docs/specification/SOURCE_MANIFEST.json').read_text(encoding='utf-8'))
     for row in manifest['files']:
-        assert hashlib.sha256((ROOT / row['path']).read_bytes()).hexdigest() == row['sha256'], row['path']
+        path = ROOT / row['path']
+        data = path.read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+        if digest != row['sha256'] and (path.suffix in {'.ts', '.json', '.js', '.mjs', '.md', '.html', '.css', '.py', '.txt', '.csv'} or path.name == '.nvmrc'):
+            # Windows core.autocrlf may change checkout line endings without changing the Git blob.
+            digest = hashlib.sha256(data.replace(b'\r\n', b'\n')).hexdigest()
+        assert digest == row['sha256'], row['path']
     expressions = {
         'personal-path': r'[A-Za-z]:[\\/](?:Users|home)[\\/]',
         'provider-token': r'\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[A-Z0-9]{16}|sk-[A-Za-z0-9_-]{24,})\b',
@@ -69,7 +75,8 @@ def check():
             if re.search(expression, text):
                 findings.append((name, kind))
     assert not findings, findings
-    assert not (ROOT / '.github').exists(), 'No active publishing configuration is permitted'
+    workflows = {name for name in names if name.startswith('.github/')}
+    assert workflows == {'.github/workflows/ci.yml'}, 'Only the reviewed quality CI workflow is permitted'
     listing = '\n'.join(sorted(names)) + '\n'
     assert (ROOT / 'PUBLIC_FILES.txt').read_text(encoding='utf-8') == listing, 'Update PUBLIC_FILES.txt after changing public files'
     result = {'public_files': len(files), 'safe_images': len(images), 'immutable_files': len(manifest['files']), 'secret_pattern_findings': len(findings)}

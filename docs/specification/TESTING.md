@@ -14,11 +14,15 @@
 | `npm run fixtures:check` | Pythonによる基本合成画像/manifest検査 |
 | `npm run fixtures:check:heif` | 固定したPython環境でのHEIF検査 |
 
+## 新規クローンでの標準検証
+
+`npm ci`の後、`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`を順に実行します。[GitHub ActionsのCI](../../.github/workflows/ci.yml)もPull Requestと`main`へのPushでこの5コマンドを実行します。E2Eは隔離環境と試験対象を選んでローカル実行します。CIへ追加する候補は、現行UIで旅行作成・合成写真取り込み・GPS地図表示・アルバム作成を通す[developer-onboarding.spec.ts](../../tests/e2e/developer-onboarding.spec.ts)です。Chromeの導入方法と実行環境を固定し、複数環境で安定性を確認してからCIに追加します。現時点ではCIに含めません。
+
 ## 隔離E2E
 
 ```powershell
 $env:PHOTO_ROUTE_TEST_PORT='18194'
-npx playwright test tests/e2e/ux-w1.spec.ts tests/e2e/ux-w2.spec.ts --reporter=line
+npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line
 ```
 
 ポートは実行前に未使用を確認し、利用中のサーバーを再利用しません。設定は5173を拒否、workers=1、reuseExistingServer=false。既定は5184、Chromeチャンネルの一時プロファイルです。`PHOTO_ROUTE_TEST_BROWSER`はchrome/edge/firefox/webkitを選べますが、各環境の導入/動作確認は別途必要です。
@@ -43,6 +47,15 @@ npx playwright test tests/e2e/ux-w1.spec.ts tests/e2e/ux-w2.spec.ts --reporter=l
 過去の私有検証報告とスクリーンショットは公開版に含めません。[RC-1データ保護テスト](../../tests/e2e/rc1-data-protection.spec.ts)、[V4.1](../../tests/e2e/ux-v41.spec.ts)、[V4.2](../../tests/e2e/ux-v42.spec.ts)、[W1](../../tests/e2e/ux-w1.spec.ts)・[W2](../../tests/e2e/ux-w2.spec.ts)等のテストコードは保持しています。存在することと今回合格したことを区別します。
 
 一般Undo、旧単一所属、ズーム17への自動移動、旧件数文言等を前提にする歴史的E2Eも残っています。全旧テストが現在のUI仕様へ更新済みとは保証しません。実行前に目的を棚卸しし、新仕様で同等以上の検証へ置換します。旧DB/ZIPの互換確認は残します。テスト出力先のspecs/は生成物としてGit対象外です。任意の実写真/私有ZIPを使うテストに環境変数を設定しないでください。通常の確認は同梱の合成fixtureだけを使います。
+
+### 現状の区分
+
+| 区分 | 例・判断 |
+|---|---|
+| 現行仕様で実行できる | `tests/unit/**/*.test.ts`は`npm test`の標準対象。代表E2Eは`developer-onboarding.spec.ts`、`ia-3-1-empty-album.spec.ts`の今回合格した範囲。 |
+| 旧仕様に依存 | `ia-2a-trips.spec.ts`と`ia-2b-import.spec.ts`は共通ヘルパーで旧件数文言`0件`を期待し、現行UIの`写真 0枚`と一致せず今回失敗した。`ux-r9-undo.spec.ts`は一般Undo通知・管理画面のUndoボタンを期待する。現在は一般利用者向けUndo UIがないため、現行仕様の標準回帰へ含めない。旧単一所属や旧件数文言を前提にする他の歴史的E2Eも要棚卸し。 |
+| 外部環境や追加データが必要 | `camera-local-probe.spec.ts`は`CAMERA_BENCHMARK_FILE`または`PHOTO_PROBE_DIR`、`phase2-integration.spec.ts`の任意テストは`PHOTO_ROUTE_ARCHIVE`を要求する。環境変数なしでは明示的にskipされる。通常の開発検証に実データを渡さない。 |
+| 実行結果が未確認 | 上記で実行した範囲以外の多数のE2E、他ブラウザ、全E2E一括実行。ファイルの存在を成功実績として扱わない。 |
 
 ## 文書検査
 

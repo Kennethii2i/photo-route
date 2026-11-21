@@ -1,3 +1,4 @@
+.github/workflows/ci.yml
 .gitignore
 .nvmrc
 AGENTS.md
@@ -116,6 +117,7 @@ src/style.css
 tests/e2e/archive.spec.ts
 tests/e2e/camera-jpeg.spec.ts
 tests/e2e/camera-local-probe.spec.ts
+tests/e2e/developer-onboarding.spec.ts
 tests/e2e/exif-capability.spec.ts
 tests/e2e/gps-datum.spec.ts
 tests/e2e/hash-queue.spec.ts

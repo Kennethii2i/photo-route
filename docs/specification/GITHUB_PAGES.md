@@ -2,10 +2,10 @@
 
 ## 現状
 
-- Git remoteは未設定。リポジトリ名/所有者/公開範囲/ドメインは未確定。
+- ソースは公開済みの[GitHubリポジトリ](https://github.com/Kennethii2i/photo-route)にあり、`main`が既定ブランチ。GitHub PagesのWebアプリは未公開。
 - [vite.config.ts](../../vite.config.ts)にbase/outDirの上書きはなく、既定baseは`/`、ビルド出力はdist。
-- 既存のGitHub Actions workflowはない。今回も`.github/workflows/`を有効化していない。
-- 製品コード/DB/ZIP/配信先は変更していない。[公開前の停止事項](PUBLICATION_REVIEW.md)を先に解消する。
+- [CI workflow](../../.github/workflows/ci.yml)は品質検証のみで、Pagesへのデプロイは行わない。
+- 製品コード/DB/ZIP/配信先は変更していない。[公開時の確認記録](PUBLICATION_REVIEW.md)の残課題を確認する。
 
 ## Viteのbase
 
@@ -32,8 +32,8 @@ python tools/check_pages_build.py .validation/pages-probe /__pages_probe__/
 
 ## 所有者承認後の設定手順
 
-1. [公開前検査](PUBLICATION_REVIEW.md)の個人情報/画像/ライセンスを確認し、公開する履歴と範囲を決定する。先に非公開の保全を確保する。
-2. 所有者がGitHubのリポジトリ名・可視性・URLを決める。今回リポジトリ作成/remote登録/Pushは実施しない。将来も審査対象でないブランチ/バックアップ参照を`--all`等で一括Pushしない。
+1. [公開時の確認記録](PUBLICATION_REVIEW.md)の個人情報/画像/ライセンス残課題を確認する。非公開の保全を維持する。
+2. 既存の公開リポジトリ名・所有者と実際のPages URLを確認する。審査対象でないブランチ/バックアップ参照を`--all`等で一括Pushしない。
 3. ソース公開とWeb公開を別に承認する。GitHubのSettings → PagesでSourceをGitHub Actionsにするのは、その段階の操作。[GitHub公式手順](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)を再確認する。
 4. [非稼働workflow案](examples/github-pages.yml.example)をレビューし、承認された場合だけ`.github/workflows/`へコピーする。案は手動起動のみで、mainかつ確認入力trueの場合だけ実行。通常Pushトリガーはない。
 5. `.nvmrc`/npm版、依存導入、型検査/ビルド、base、出力distを確認する。Pages environmentの保護と権限を設定し、distだけをアップロードする。リポジトリ全体、ZIP、写真、DB、ログを配信対象にしない。
