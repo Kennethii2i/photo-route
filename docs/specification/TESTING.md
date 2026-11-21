@@ -16,16 +16,17 @@
 
 ## 新規クローンでの標準検証
 
-`npm ci`の後、`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`を順に実行します。[GitHub ActionsのCI](../../.github/workflows/ci.yml)もPull Requestと`main`へのPushでこの5コマンドを実行します。E2Eは隔離環境と試験対象を選んでローカル実行します。CIへ追加する候補は、現行UIで旅行作成・合成写真取り込み・GPS地図表示・アルバム作成を通す[developer-onboarding.spec.ts](../../tests/e2e/developer-onboarding.spec.ts)です。Chromeの導入方法と実行環境を固定し、複数環境で安定性を確認してからCIに追加します。現時点ではCIに含めません。
+`npm ci`の後、`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`を順に実行します。[GitHub ActionsのCI](../../.github/workflows/ci.yml)もPull Requestと`main`へのPushでこの5コマンド、[現在の公開安全性検査](../../tools/check_public_safety.py)、[代表E2E](../../tests/e2e/developer-onboarding.spec.ts)を実行します。全E2Eは標準検証に含めません。CIはUbuntu 24.04、lockfileのPlaywright 1.65.1に対応するChromium headless shell 159.0.8154.6（Playwright revision 1255）を`npx playwright install --with-deps --only-shell chromium`で導入します。ローカルの代表E2Eでは`npx playwright install chromium`を先に実行します。
 
 ## 隔離E2E
 
 ```powershell
 $env:PHOTO_ROUTE_TEST_PORT='18194'
+$env:PHOTO_ROUTE_TEST_BROWSER='chromium'
 npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line
 ```
 
-ポートは実行前に未使用を確認し、利用中のサーバーを再利用しません。設定は5173を拒否、workers=1、reuseExistingServer=false。既定は5184、Chromeチャンネルの一時プロファイルです。`PHOTO_ROUTE_TEST_BROWSER`はchrome/edge/firefox/webkitを選べますが、各環境の導入/動作確認は別途必要です。
+ポートは実行前に未使用を確認し、利用中のサーバーを再利用しません。設定は5173を拒否、workers=1、reuseExistingServer=false。既定は5184、Chromeチャンネルの一時プロファイルです。`PHOTO_ROUTE_TEST_BROWSER=chromium`ではPlaywrightが導入した隔離Chromiumを使います。chrome/edge/firefox/webkitも選べますが、各環境の導入/動作確認は別途必要です。macOS/Linuxでは`PHOTO_ROUTE_TEST_BROWSER=chromium PHOTO_ROUTE_TEST_PORT=18194 npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line`です。
 
 合成データとテストが作ったDBだけを使い、通常Chrome/試用プロファイル/実DB/実ZIPは使用しません。外部地図要求は試験のrouteでローカル応答または遮断します。全テストが同じ通信方針かは試験ファイルを確認します。実地図での表示確認は別に明記します。
 
@@ -59,8 +60,8 @@ npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line
 
 ## 文書検査
 
-標準ライブラリだけで動く[check_specification.py](../../tools/check_specification.py)を`python tools/check_specification.py`で実行し、内部リンク/ソース参照/HEAD表記を確認します。[公開履歴検査](PUBLICATION_REVIEW.md)は別工程です。これらは実装の動作保証や秘密情報不存在の証明ではありません。
+標準ライブラリだけで動く[check_specification.py](../../tools/check_specification.py)を`python tools/check_specification.py`で実行し、内部リンク/ソース参照/HEAD表記を確認します。公開対象には`python tools/check_public_safety.py`、初回公開の由来確認には`python tools/check_public_snapshot.py`を使用します。適用範囲は[DEVELOPMENT](DEVELOPMENT.md)を参照してください。これらは実装の動作保証や秘密情報不存在の証明ではありません。
 
-この公開準備版の実行結果は[公開準備の検証記録](PUBLICATION_REVIEW.md)にまとめます。公開準備の最小検証と、未実行の試験を分けて記録します。
+初回公開準備時の実行結果は[当時の検証記録](PUBLICATION_REVIEW.md)にあります。現在の検証結果とは区別してください。
 
 仕様の確認元Git HEAD: `989eae47f3ae96fa557b97eb5d7cb63e47e77f9e`

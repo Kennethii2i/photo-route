@@ -29,7 +29,7 @@ npm test
 npm run build
 ```
 
-E2Eは[TESTING](docs/specification/TESTING.md)から現行仕様に合う対象を選び、専用ポートと隔離ブラウザで実行します。全歴史的E2Eを標準検証とみなしません。文書変更には`python tools/check_specification.py`も実行します。失敗した試験を理由なく削除・skip・期待値変更しないでください。
+E2Eは[TESTING](docs/specification/TESTING.md)から現行仕様に合う対象を選び、専用ポートと隔離ブラウザで実行します。全歴史的E2Eを標準検証とみなしません。公開するファイルは`python tools/check_public_safety.py`で検査し、文書変更には`python tools/check_specification.py`も実行します。失敗した試験を理由なく削除・skip・期待値変更しないでください。
 
 変更内容と検証結果を確認してから、以下のようにローカルコミットします。PushとPR作成は許可された時点で行います。
 
@@ -41,7 +41,7 @@ git commit -m "docs: explain local development workflow"
 git push -u origin feat/short-description
 ```
 
-`git add`には**自分が変更した対象ファイルだけ**を指定してください。GitHubで当該ブランチから`main`宛てのPull Requestを作成し、変更目的、実行したコマンドと結果、未実行事項、データ・通信・移行への影響を記入します。CIが通った後にレビューを依頼し、指摘を同じブランチで修正します。統合はレビュー済みの変更に限ります。
+`git add`には**自分が変更した対象ファイルだけ**を指定してください。GitHubで当該ブランチから`main`宛てのPull Requestを作成し、[PRテンプレート](.github/PULL_REQUEST_TEMPLATE.md)へ変更目的、実行したコマンドと結果、未実行事項、データ・通信・移行への影響を記入します。CIが通った後にレビューを依頼し、指摘を同じブランチで修正します。統合はレビュー済みの変更に限ります。
 
 書き込み権限のない外部開発者はGitHubでこのリポジトリを**Fork**し、自分のForkをクローンします。`git remote add upstream https://github.com/Kennethii2i/photo-route.git`を設定し、作業前に`upstream/main`を取得して自分の`main`を更新します。作業ブランチをForkの`origin`へPushし、GitHubで`Kennethii2i/photo-route:main`宛てのPull Requestを作成します。Fork上で作業する場合も、実写真・実DB・ZIP・認証情報をコミットしないでください。
 
