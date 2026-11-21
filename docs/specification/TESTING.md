@@ -16,7 +16,7 @@
 
 ## 新規クローンでの標準検証
 
-`npm ci`の後、`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`を順に実行します。[GitHub ActionsのCI](../../.github/workflows/ci.yml)もPull Requestと`main`へのPushでこの5コマンド、[現在の公開安全性検査](../../tools/check_public_safety.py)、[代表E2E](../../tests/e2e/developer-onboarding.spec.ts)を実行します。全E2Eは標準検証に含めません。CIはUbuntu 24.04、lockfileのPlaywright 1.65.1とその対応Chromium headless shellを`npx playwright install --with-deps --only-shell chromium`で導入します。ローカルの代表E2Eでは`npx playwright install chromium`を先に実行します。
+`npm ci`の後、`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`を順に実行します。[GitHub ActionsのCI](../../.github/workflows/ci.yml)もPull Requestと`main`へのPushでこの5コマンド、[現在の公開安全性検査](../../tools/check_public_safety.py)、[代表E2E](../../tests/e2e/developer-onboarding.spec.ts)を実行します。全E2Eは標準検証に含めません。CIはUbuntu 24.04、lockfileのPlaywright 1.65.1に対応するChromium headless shell 159.0.8154.6（Playwright revision 1255）を`npx playwright install --with-deps --only-shell chromium`で導入します。ローカルの代表E2Eでは`npx playwright install chromium`を先に実行します。
 
 ## 隔離E2E
 
