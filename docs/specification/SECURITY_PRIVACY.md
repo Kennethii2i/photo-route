@@ -68,3 +68,5 @@ Esri利用の所有者承諾に伴い、[資格情報規則](EXTERNAL_API_CREDEN
 所有者のキー不要・地域限定への変更依頼により、航空・衛星写真を選び拡大した対象矩形の閲覧時だけ、`cyberjapandata.gsi.go.jp`（日本）・`basemap.nationalmap.gov`（米国本土）へHTTPSの公開画像GETを追加。閲覧範囲やIP等は配信者へ伝わり得る。写真・Exif・名前・所属は付加せず、認証情報・APIキーを要求へ追加しない。大量取得/先読み/独自永続キャッシュなし。ラベルはOpenFreeMap、世界下地はEOX。Esri商用World Imagery・アカウント・PC内中継は今回の計画から取り下げ。既存の資格情報保護は維持する。[配信条件](../regional-imagery-2026-11-22.md)と[第三者通知](../../THIRD_PARTY_NOTICES.md)を参照。
 
 今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`
+
+今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`

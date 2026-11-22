@@ -65,3 +65,5 @@ The owner approved MIT for Photo Route application code and a separate public re
 所有者は高画質の世界航空写真をEsriで導入する案を取り下げ、日本・米国等のAPIキーなしで提供される地域へ限定した実装を依頼した。今回の地域は地理院とUSGS米国本土を選定。[実装前計画・通信・復旧・検証](regional-imagery-2026-11-22.md)を記録し、アカウント/キー/PC内中継は追加しない。過去の依頼やキー保護の実装記録は削除せず、現在の範囲だけをこの依頼で置き換える。
 
 今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`
+
+今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`

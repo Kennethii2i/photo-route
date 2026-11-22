@@ -61,3 +61,5 @@ rootのmainと既存試用サーバーは維持。今回は新しい製品通信
 変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
 
 今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`
+
+今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`

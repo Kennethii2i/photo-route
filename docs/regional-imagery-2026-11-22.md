@@ -47,3 +47,5 @@ DB v3、ZIP v2、写真/アルバム/カメラの意味は変更しない。地�
 事前Explorerの少数HTTP確認ではGSI東京z18とUSGS DC z16がJPEG/HTTP200/CORS *、USGS z17/18は404。USGS NAIP Imagery動的表示はtimeout/504、NAIPPlusは応答例があるものの安定性/条件を広げるため今回は採用しない。
 
 変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`
+
+今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`
