@@ -48,6 +48,9 @@ export class PhotoImporter {
     const decodeBudget = new PreparationBudget(MAX_THUMBNAIL_PIXELS);
     const abort = new AbortController(); this.abort = abort;
     const fatal: { error: AutomaticJpegError | null } = { error: null };
+    const stopOnFatal = (error: unknown) => {
+      if (error instanceof AutomaticJpegError && error.stopImport) { fatal.error = error; abort.abort(); }
+    };
     let stopped = false;
     const cancelled = (filename: string): FileOutcome => ({ filename, state: 'cancelled', reason: '利用者が中断しました', photoId: null });
     const duplicate = (filename: string): FileOutcome => ({ filename, state: 'skipped-duplicate', reason: '元画像のSHA-256が既存写真と一致します。同じ旅行への重複登録はできません', photoId: null });
@@ -88,7 +91,11 @@ export class PhotoImporter {
             // is exclusive with both normal and other automatic decodes.
             const result = await decodeBudget.run(MAX_THUMBNAIL_PIXELS, async () => {
               if (this.cancelled || stopped || abort.signal.aborted) return null;
-              return makeAutomaticJpeg(bytes, id, abort.signal);
+              try { return await makeAutomaticJpeg(bytes, id, abort.signal); }
+              catch (error) {
+                // Stop waiters before releasing the exclusive decode budget.
+                stopOnFatal(error); throw error;
+              }
             });
             if (!result) return cancelled(filename);
             metadata = result.metadata; thumbnail = result.thumbnail;
@@ -113,7 +120,7 @@ export class PhotoImporter {
           });
           return { filename, hash, photo, thumbnail, thumbnailError, error: null };
         } catch (error) {
-          if (error instanceof AutomaticJpegError && error.stopImport) { fatal.error = error; abort.abort(); }
+          stopOnFatal(error);
           if (error instanceof DOMException && error.name === 'AbortError') {
             if (this.cancelled) job.lastError = error.message;
             return { ...cancelled(filename), reason: error.message };
@@ -150,7 +157,7 @@ export class PhotoImporter {
         await this.db.savePhoto(prepared.photo, prepared.thumbnail, { allowDuplicateAcrossTrips: status.exception });
         return { filename: prepared.filename, state: prepared.thumbnail ? 'imported' : 'partial', reason: [status.exception ? '明示的に別の旅行へ重複写真として追加しました' : null, prepared.thumbnailError].filter(Boolean).join(' / ') || null, photoId: prepared.photo.id };
       } catch (error) {
-        if (error instanceof AutomaticJpegError && error.stopImport) { fatal.error = error; abort.abort(); }
+        stopOnFatal(error);
         return { filename: prepared.filename, state: 'failed', reason: errorText(error), photoId: null };
       }
     };
