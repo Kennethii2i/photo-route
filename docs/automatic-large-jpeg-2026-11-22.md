@@ -96,3 +96,5 @@ GitHubのmainはPRと`quality`成功を要求し、適用ルールでRebaseを�
 今回の変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
 
 実装・関連仕様・テストを含む確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
+
+CI停止順序の補強・再現試験を含む確認元Git HEAD: `195286ede56185459ab2d01a2be8eb25e1358e20`
