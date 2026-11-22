@@ -54,3 +54,7 @@ The selected D-008 recovery policies must be implemented before the correspondin
 ## P2.2 publication decision (APPROVED)
 
 The owner approved MIT for Photo Route application code and a separate public repository with an independent initial history. Private history, unapproved screenshots and user data are excluded. Third-party terms remain separate. Copyright-holder wording is provisional and must be confirmed before publication. This does not authorize Push, hosted publication, or data migration.
+
+## 2026-11-22 所有者依頼：無料の世界背景4種類
+
+所有者は標準・航空/衛星写真・地形・淡色、および学術情報を「詳しく知る」にまとめる構成に賛成し、続けて無料の基本4地図を計画後に実装するよう明示指示した。[計画](free-world-basemaps-2026-11-22.md)に実装範囲・無料配信の技術選択・通信・復旧・検証を記録する。サービス名は所有者指定ではなく、この条件内での実装上の選択。課金・DB/ZIP変更・学術データAPI・公開は含めない。過去のOPEN/PROPOSEDの一括承認や長期配信保証を意味しない。

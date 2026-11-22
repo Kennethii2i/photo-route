@@ -56,3 +56,14 @@ P2.2: 独立した公開用初期履歴、本体コードのMIT採用、第三�
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
 
 今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
+
+## 2026-11-22 無料の世界背景地図
+
+- 起動時の標準をOpenFreeMap Libertyとし、従来Positronを淡色として維持。左下のレイヤー4択を追加。
+- 航空/衛星写真は無料のEOX cloudless 2016限定、地形はMapterhorn。学術テーマは後続案で今回未実装。
+- 背景切替の世代/中断/失敗時再試行、写真とカメラ/限定表示の維持、日付変更線の短いfitを追加。
+- DB v3/ZIP v2・元Exif/GPS・写真保存・所属・Undo・依存は変更なし。追加配信先/地域送信と画質制約をUI/通知へ記載。
+
+[計画と検証記録](../free-world-basemaps-2026-11-22.md)、[地図仕様](MAP_AND_GEO.md)。
+
+今回の背景地図変更前基準Git HEAD: `b3142ba0cefd217ca015f6e8c2236761d6ccfd7e`

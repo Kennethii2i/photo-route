@@ -8,6 +8,8 @@
 
 その後の[大きなJPEGの自動取り込み・限定対応と検証](../automatic-large-jpeg-2026-11-22.md)では、長辺制限で拒否される60MP以下のJPEGを原本選択だけで処理します。試作64MPと製品対応範囲を区別します。
 
+無料の世界背景4種類は[地図仕様](MAP_AND_GEO.md)と[計画・検証](../free-world-basemaps-2026-11-22.md)を参照してください。
+
 ## 読む順序
 
 初参加者はルートの[README](../../README.md)で環境を作り、[CONTRIBUTING](../../CONTRIBUTING.md)と[AGENTS](../../AGENTS.md)で共同開発ルールを確認します。仕様は PRODUCT → ARCHITECTURE → DEVELOPMENT → DATA_MODEL → STORAGE_AND_BACKUP の順に読み、変更対象の機能文書とTESTINGへ進んでください。

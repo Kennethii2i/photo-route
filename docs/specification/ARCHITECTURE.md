@@ -76,3 +76,9 @@ Applicationが長辺で拒否された60MP以下のJPEGを識別し、[automatic
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
 
 今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
+
+## 2026-11-22 世界背景地図の責務
+
+[basemap.ts](../../src/infrastructure/basemap.ts)が配信設定と背景style合成、[PhotoMap](../../src/presentation/map.ts)が非同期切替/世代管理/写真レイヤー再設置、[basemap-control](../../src/presentation/basemap-control.ts)が4択と読込状態、[map-bounds](../../src/presentation/map-bounds.ts)が日付変更線を含む表示境界を担当する。写真/アルバム表示設定と背景切替を分離。Domain/DB/ZIP/依存は変更しない。
+
+今回の背景地図変更前基準Git HEAD: `b3142ba0cefd217ca015f6e8c2236761d6ccfd7e`

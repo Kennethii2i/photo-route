@@ -35,3 +35,9 @@
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
 
 今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
+
+## 2026-11-22 背景地図4種類
+
+地図左下のレイヤーから標準・航空/衛星写真・地形・淡色を選択する。無料・APIキー不要。衛星画像は2016年の約10m級。背景切替で写真/検索/アルバム限定状態やカメラを変えない。[地図仕様](MAP_AND_GEO.md)、[実装](../../src/presentation/basemap-control.ts)、[計画と検証](../free-world-basemaps-2026-11-22.md)。
+
+今回の背景地図変更前基準Git HEAD: `b3142ba0cefd217ca015f6e8c2236761d6ccfd7e`

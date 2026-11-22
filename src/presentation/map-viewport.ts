@@ -38,7 +38,7 @@ export function mapViewportInsets(container: HTMLElement): MapInsets {
   // Keep a rectangular viewing area clear of the actual controls, rather than
   // reserving an entire side for a small corner button on a narrow screen.
   let candidates = [base];
-  for (const element of document.querySelectorAll('#map-tools, #map-navigation, #drawer-toggle, #visit-focus-banner, #import-task, .maplibregl-ctrl-bottom-right, .maplibregl-ctrl-bottom-left')) {
+  for (const element of document.querySelectorAll('#map-tools, #basemap-control, #basemap-panel, #map-navigation, #drawer-toggle, #visit-focus-banner, #import-task, .maplibregl-ctrl-bottom-right, .maplibregl-ctrl-bottom-left')) {
     const obstacle = rect(element);
     if (!obstacle) continue;
     candidates = candidates.flatMap(current => {

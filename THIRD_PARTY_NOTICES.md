@@ -38,3 +38,11 @@ Photo Route本体のコードは[MIT](LICENSE)です。この許諾は、権利�
 固定SVGは本体ソース中のパスで、外部アイコンファイルをコピーしていません。外部アイコンライブラリの新規採用はありません。第三者素材を追加する際は出典/条件/クレジットを記録してください。
 
 同梱画像23件は[合成素材台帳](docs/specification/SAFE_ASSETS.md)のfixtureだけです。実写真、過去スクリーンショット、参考デザイン画像、写真バックアップは含みません。本体コードへのMIT適用を、未知の画像や地図の権利へ拡張しないでください。
+
+## 2026-11-22 世界背景の追加配信
+
+- OpenFreeMap Libertyも利用する。[公式内訳](https://github.com/hyperknot/openfreemap/blob/main/LICENSE.md)ではOSM LibertyはOSM Bright由来、styleコードBSD-3-Clause・デザインCC BY 4.0。配信styleをブラウザ内で合成し、帰属を維持する。地図ファイル/フォント/スプライトをリポジトリに同梱しない。
+- EOX cloudlessは**2016版限定**。[公式FAQ](https://cloudless.eox.at/documentation/faq)がCC BY 4.0、商用含む無料公開endpoint利用、Fair Use、SLAなしを明示。正規帰属は「EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016)」。地図上で帰属/CC BYリンクを表示する。2018年以降へ自動更新せず、原タイルの再配布/販売/独自キャッシュは追加しない。
+- Mapterhornは[公開配信](https://mapterhorn.com/data-access/)を実行時に取得し、地図上の[出典一覧](https://mapterhorn.com/attribution/)を保持する。提供元コードのBSD-3と、各元標高資料の利用条件は別。元データ/タイルは同梱しない。
+
+本体MITを外部地図へ適用しない。今回追加するnpm依存はない。[配信条件と検証記録](docs/free-world-basemaps-2026-11-22.md)。
