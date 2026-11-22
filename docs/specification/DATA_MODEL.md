@@ -146,3 +146,9 @@ DB名の既定値は`photo-route-library`、バージョンは3です。`appMeta
 IndexedDB自体にリレーショナルDBの外部キー制約はありません。整合性はDomain検証とLibraryDbのトランザクションで守ります。製品コードからストアへ直接書いて検証を迂回しません。
 
 仕様の確認元Git HEAD: `989eae47f3ae96fa557b97eb5d7cb63e47e77f9e`
+
+## 2026-11-22 大JPEG自動処理の保存契約
+
+[限定自動取り込み](IMPORT_AND_PHOTOS.md)も既存Photo/Thumbnailを使用し、DB v3/ZIP v2・所属・補正・原本非保存の意味を変えません。`contentSha256`と`sourceByteLength`は選んだ原本、sourceGps/sourceTime/sourceOrientationは原本Exifに由来します。表示用の縮小JPEGを別Photoとして登録しません。新経路の失敗ではPhoto/Thumbnailを保存せず、Jobの書き込みはあり得ます。timeout等は既存のJob.state=interruptedを使い、新フィールド/移行はありません。
+
+今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`

@@ -16,7 +16,7 @@
 
 ## 新規クローンでの標準検証
 
-`npm ci`の後、`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`を順に実行します。[GitHub ActionsのCI](../../.github/workflows/ci.yml)もPull Requestと`main`へのPushでこの5コマンド、[現在の公開安全性検査](../../tools/check_public_safety.py)、[代表E2E](../../tests/e2e/developer-onboarding.spec.ts)を実行します。全E2Eは標準検証に含めません。CIはUbuntu 24.04、lockfileのPlaywright 1.65.1に対応するChromium headless shell 159.0.8154.6（Playwright revision 1255）を`npx playwright install --with-deps --only-shell chromium`で導入します。ローカルの代表E2Eでは`npx playwright install chromium`を先に実行します。
+`npm ci`の後、`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`を順に実行します。[GitHub ActionsのCI](../../.github/workflows/ci.yml)もPull Requestと`main`へのPushでこの5コマンド、[現在の公開安全性検査](../../tools/check_public_safety.py)、[初回操作](../../tests/e2e/developer-onboarding.spec.ts)と[自動JPEG取り込み](../../tests/e2e/automatic-large-jpeg.spec.ts)の代表E2Eを実行します。全E2Eは標準検証に含めません。CIはUbuntu 24.04、lockfileのPlaywright 1.65.1に対応するChromium headless shell 159.0.8154.6（Playwright revision 1255）を`npx playwright install --with-deps --only-shell chromium`で導入します。ローカルの代表E2Eでは`npx playwright install chromium`を先に実行します。
 
 ## 隔離E2E
 
@@ -87,3 +87,15 @@ npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line
 [計画・実行結果・未確認事項](../import-performance-2026-11-22.md)。
 
 今回の変更前基準Git HEAD: `4ad902d6adef8c3d1b72e7d44063a25f74e2dd4e`
+
+## 2026-11-22 自動JPEG経路の検証
+
+[構造/Worker単体試験](../../tests/unit/automatic-jpeg.test.ts)と[調整処理単体試験](../../tests/unit/automatic-jpeg-import.test.ts)は、元のガード維持、TIFF循環/範囲外、元メタデータ、返却検証、予算排他、転送後の元SHA/バイト数、重複、中断、timeout/通信異常、保存直前照会中の停止、fatal＋Job/通知失敗を検証します。従来の[中断試験](../../tests/unit/import-pipeline.test.ts)では、保存未開始時は中断を尊重し、開始済み保存は残ることを分けます。
+
+[自動JPEG E2E](../../tests/e2e/automatic-large-jpeg.spec.ts)はブラウザCanvas生成の48MP実画像8向き、60MP/64MP境界、SHA/Exif保持、512pxの色/寸法、ZIP往復、原本だけを選ぶUI、過大coded/display/visibleRect、能力不足、不正構造、timeout/中断/進捗失敗を検証します。不正構造の試験ではnative機能照会へ到達したら異常応答を返し、単なるfailedと区別します。CIにも同じ試験を追加し、新しい合成画像バイナリーやPython依存は導入しません。
+
+PowerShellで代表2ファイルを実行する例は、未使用ポートを指定して`$env:PHOTO_ROUTE_TEST_BROWSER='chromium'; $env:PHOTO_ROUTE_TEST_PORT='18266'; npx playwright test tests/e2e/developer-onboarding.spec.ts tests/e2e/automatic-large-jpeg.spec.ts --reporter=line`です。通常Chromeを操作せず、専用の一時プロファイルを使います。UI画像は1440/390/320で`test-results/automatic-jpeg/`へ出力します。
+
+[検証記録](../automatic-large-jpeg-2026-11-22.md)に実行件数・ブラウザ版・nativeメモリー実測と限界を記録します。返却サイズ検査やWorker terminateを内部メモリーのハード上限とは扱いません。DB/ZIP版は変更しないため、全移行/大量ZIP/全歴史的E2Eは今回繰り返しません。
+
+今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`

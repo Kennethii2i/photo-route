@@ -800,7 +800,7 @@ export async function startApp(): Promise<void> {
     }
     if (!currentThumbUrl) {
       const placeholder = document.createElement('p'); placeholder.className = 'placeholder';
-      placeholder.textContent = 'サムネイルなし。再生成には原本写真を再選択する必要があります。'; detail.append(placeholder);
+      placeholder.textContent = '表示用画像は保存されていません。写真情報は確認できます。'; detail.append(placeholder);
     }
     detail.append(title);
     const previousExpected = correctionExpected.get(photo.id);
@@ -1386,7 +1386,8 @@ export async function startApp(): Promise<void> {
         importStatus.textContent = `${report.job.state === 'cancelled' ? '取り込みを中断しました' : counts.failed ? '一部の写真を取り込めませんでした' : '取り込みが完了しました'}。追加 ${counts.imported + counts.partial}枚・重複スキップ ${counts['skipped-duplicate']}枚・失敗 ${counts.failed}枚` +
           (counts.partial ? `。うち${counts.partial}枚は写真情報のみ（サムネイルなし）` : '') +
           (counts.cancelled ? `・中断 ${counts.cancelled}枚。保存済みの写真は残っています` : '') +
-          (counts.failed ? '。ファイル別の結果を確認し、失敗した写真を選び直してください' : '');
+          (report.job.state === 'cancelled' && report.job.lastError?.includes('再読み込み') ? '。続けて取り込むにはページを再読み込みしてください' : '') +
+          (counts.failed ? '。ファイル別の理由を確認してください' : '');
       })
       .catch(error => {
         importPhase('error');

@@ -126,7 +126,8 @@ describe('bounded import preparation and ordered commits', () => {
     await vi.waitFor(() => expect(image.parseMetadata).toHaveBeenCalledTimes(2));
     expect(image.makeThumbnail).toHaveBeenCalledTimes(1);
     context.importer.cancel(); gate.resolve();
-    expect((await result).outcomes.map(value => value.state)).toEqual(['imported', 'cancelled']);
+    expect((await result).outcomes.map(value => value.state)).toEqual(['cancelled', 'cancelled']);
+    expect(context.db.savePhoto).not.toHaveBeenCalled();
     expect(image.makeThumbnail).toHaveBeenCalledTimes(1);
   });
 
@@ -154,7 +155,8 @@ describe('bounded import preparation and ordered commits', () => {
     const result = context.importer.importFiles([first, second], context.trip.id);
     await vi.waitFor(() => expect(image.makeThumbnail).toHaveBeenCalledTimes(1));
     context.importer.cancel(); gate.resolve();
-    expect((await result).outcomes.map(value => value.state)).toEqual(['imported', 'cancelled']);
+    expect((await result).outcomes.map(value => value.state)).toEqual(['cancelled', 'cancelled']);
+    expect(context.db.savePhoto).not.toHaveBeenCalled();
     expect(readSecond).not.toHaveBeenCalled();
   });
 
@@ -168,6 +170,16 @@ describe('bounded import preparation and ordered commits', () => {
     expect(result.outcomes.map(value => value.state)).toEqual(['imported', 'skipped-duplicate']);
     expect(result.outcomes[0]!.reason).toContain('別の旅行');
     expect(context.photos).toHaveLength(1);
+  });
+
+  it('keeps an already-started save when cancellation arrives and prevents subsequent saves', async () => {
+    const gate = deferred(), context = setup();
+    context.db.savePhoto.mockImplementation(async photo => { await gate.promise; context.photos.push(photo); });
+    const pending = context.importer.importFiles([file(1), file(2)], context.trip.id);
+    await vi.waitFor(() => expect(context.db.savePhoto).toHaveBeenCalledOnce());
+    context.importer.cancel(); gate.resolve();
+    expect((await pending).outcomes.map(value => value.state)).toEqual(['imported', 'cancelled']);
+    expect(context.photos).toHaveLength(1); expect(context.db.savePhoto).toHaveBeenCalledOnce();
   });
 
   it('releases input capacity after a read failure and continues the next input', async () => {

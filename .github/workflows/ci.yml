@@ -33,4 +33,4 @@ jobs:
         env:
           PHOTO_ROUTE_TEST_BROWSER: chromium
           PHOTO_ROUTE_TEST_PORT: '18198'
-        run: npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line
+        run: npx playwright test tests/e2e/developer-onboarding.spec.ts tests/e2e/automatic-large-jpeg.spec.ts --reporter=line

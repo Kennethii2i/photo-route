@@ -66,3 +66,11 @@ UI状態は主にメモリー上であり、再読み込み後のドラフト/�
 2026-11-22の取り込み高速化では、Application内の固定窓と入力/復号予算で先行準備を制御します。保存APIや画像生成設定は変えず、エラー・中断時に準備を回収してから終了します。Worker、依存、通信先は追加しません。[取り込み仕様](IMPORT_AND_PHOTOS.md)・[検証記録](../import-performance-2026-11-22.md)を参照してください。
 
 今回の変更前基準Git HEAD: `4ad902d6adef8c3d1b72e7d44063a25f74e2dd4e`
+
+## 2026-11-22 限定JPEG経路のWorker
+
+Applicationが長辺で拒否された60MP以下のJPEGを識別し、[automatic-jpeg.ts](../../src/infrastructure/automatic-jpeg.ts)がWorkerの起動・5秒期限・中断・返却検証を管理します。[large-jpeg-source.ts](../../src/infrastructure/large-jpeg-source.ts)は入力構造/Exifの予算検証、[Worker](../../src/infrastructure/automatic-jpeg.worker.ts)は元Exifの解析とImageDecoder/OffscreenCanvasによる表示用画像作成を担当します。[protocol](../../src/infrastructure/automatic-jpeg-protocol.ts)は結果と上限・案内を共有します。新しい依存や外部通信はありません。
+
+原本バッファをWorkerへ転送する前にSHA/バイト数を確定します。新経路は既存復号予算を全量予約して通常復号とも排他にし、Workerは結果送信前にFrame/Decoderをcloseします。timeout/通信異常/稼働中の中断ではterminateし、ページ内の処理停止フラグで次の取り込みを拒否します。このフラグは永続データではありません。native内部の解放完了を保証する仕組みではないことを[検証記録](../automatic-large-jpeg-2026-11-22.md)へ残します。
+
+今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`

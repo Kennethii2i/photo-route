@@ -27,6 +27,13 @@ const containsAscii = (bytes: Uint8Array, marker: string) => {
   return false;
 };
 
+export class ImageDimensionsError extends Error {
+  constructor(readonly mime: Photo['sourceMime'], readonly width: number, readonly height: number) {
+    super('画像ヘッダーの寸法が安全上限を超えています');
+    this.name = 'ImageDimensionsError';
+  }
+}
+
 export function inspectImage(bytes: Uint8Array): { mime: Photo['sourceMime']; width: number | null; height: number | null } {
   if (!bytes.length || bytes.length > MAX_SOURCE_BYTES) throw new Error('画像サイズの上限は64 MiBです');
   let mime: Photo['sourceMime'];
@@ -78,17 +85,20 @@ export function inspectImage(bytes: Uint8Array): { mime: Photo['sourceMime']; wi
   if (mime !== 'image/jpeg' && bytes.length > MAX_OTHER_SOURCE_BYTES) throw new Error('この画像形式のサイズ上限は20 MiBです');
   const edgeLimit = mime === 'image/jpeg' ? MAX_DECLARED_EDGE : MAX_OTHER_EDGE;
   const pixelLimit = mime === 'image/jpeg' ? MAX_DECLARED_PIXELS : MAX_OTHER_PIXELS;
-  if (width !== null && height !== null && (!width || !height || width > edgeLimit || height > edgeLimit || width * height > pixelLimit)) throw new Error('画像ヘッダーの寸法が安全上限を超えています');
+  if (width !== null && height !== null && (!width || !height || width > edgeLimit || height > edgeLimit || width * height > pixelLimit)) throw new ImageDimensionsError(mime, width, height);
   return { mime, width, height };
 }
 
 const tag = (group: Record<string, { value?: unknown }> | undefined, name: string): unknown => group?.[name]?.value ?? null;
 const scalar = (value: unknown): string | null => typeof value === 'string' ? value : Array.isArray(value) && value.length === 1 && typeof value[0] === 'string' ? value[0] : null;
 
-export async function parseMetadata(bytes: Uint8Array): Promise<Pick<Photo, 'sourceGps' | 'sourceTime' | 'sourceOrientation' | 'metadataIssues'>> {
+export async function parseMetadata(bytes: Uint8Array, options: { sourceFieldsOnly?: boolean } = {}): Promise<Pick<Photo, 'sourceGps' | 'sourceTime' | 'sourceOrientation' | 'metadataIssues'>> {
   const metadataIssues: string[] = [];
   let group: Record<string, { value?: unknown }> | undefined;
-  try { group = (await ExifReader.load(bytes, { expanded: true })).exif as typeof group; }
+  try { group = (await ExifReader.load(bytes, {
+    expanded: true,
+    ...(options.sourceFieldsOnly ? { computed: false, includeTags: { exif: ['DateTimeOriginal', 'OffsetTimeOriginal', 'GPSDateStamp', 'GPSTimeStamp', 'GPSLatitudeRef', 'GPSLatitude', 'GPSLongitudeRef', 'GPSLongitude', 'GPSMapDatum', 'GPSHPositioningError', 'Orientation'] } } : {}),
+  })).exif as typeof group; }
   catch (error) { metadataIssues.push(`Exif解析失敗: ${error instanceof Error ? error.message : String(error)}`); }
   const raw = (name: string) => tag(group, name);
   const rawDateTimeOriginal = scalar(raw('DateTimeOriginal'));
