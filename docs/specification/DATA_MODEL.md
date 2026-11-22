@@ -120,6 +120,8 @@ DB名の既定値は`photo-route-library`、バージョンは3です。`appMeta
 
 各ファイルの`FileOutcome`一覧は取り込み中のメモリー状態で、独立した永続ストアではありません。`markInterruptedJobs()`は存在しますが、現行の起動経路にその呼び出しはなく、再起動でrunningを必ずinterruptedへ変換するとは保証しません。
 
+取り込みの先行準備は最大2件ですが、結果と`processed`は入力順で1件ずつ確定します。準備完了を保存済みとは数えません。この最適化でImportJobやPhotoの保存フィールド、DB v3/ZIP v2は変更しません。根拠: [取り込み](../../src/application/import-photos.ts)。今回の変更前基準Git HEAD: `4ad902d6adef8c3d1b72e7d44063a25f74e2dd4e`。
+
 ## RecoveryEntry
 
 共通: `sequence?: number`（保存後はautoIncrementキー）、`id: string`（操作ID）、`kind`、`action: string`、`targetId: string`、`createdAt: string`、`undoneAt: string | null`。

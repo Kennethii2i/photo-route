@@ -30,7 +30,7 @@ flowchart TD
 |---|---|---|
 | 起点 | [main.ts](../../src/main.ts)、[app.ts](../../src/presentation/app.ts) | イベント接続、状態の調整、再読み込みと描画 |
 | Domain | [model.ts](../../src/domain/model.ts)、[gps.ts](../../src/domain/gps.ts)、[time.ts](../../src/domain/time.ts)、[corrections.ts](../../src/domain/corrections.ts)、[visits.ts](../../src/domain/visits.ts)、[map.ts](../../src/domain/map.ts) | Zodモデル、関係整合性、証拠を失わない日時/GPS、GeoJSON化 |
-| Application | [import-photos.ts](../../src/application/import-photos.ts) | 検証・重複判定・解析・保存・進捗を1枚ずつ調整 |
+| Application | [import-photos.ts](../../src/application/import-photos.ts) | 最大2件の上限付き準備、入力順の重複再確認・原子保存・進捗を調整 |
 | Infrastructure | [storage.ts](../../src/infrastructure/storage.ts) | IndexedDB、移行、原子的な保存/競合/内部Undo |
 | Infrastructure | [archive.ts](../../src/infrastructure/archive.ts)、[zip-stream.ts](../../src/infrastructure/zip-stream.ts) | ZIP検証、書き出し、衝突分類、ID再割当て |
 | Infrastructure | [image.ts](../../src/infrastructure/image.ts)、[basemap.ts](../../src/infrastructure/basemap.ts) | 画像と地図配信の境界 |
@@ -62,3 +62,7 @@ UI状態は主にメモリー上であり、再読み込み後のドラフト/�
 [package.json](../../package.json)の本番依存は`maplibre-gl 6.18.0`、`exifreader 4.54.0`、`fflate 0.8.3`、`zod 4.6.7`です。現行ZIP処理の正本は独自の`zip-stream.ts`で、依存宣言だけから利用経路を推測しません。`exifr`、`heic-to/csp`、`@su-engineering/heic`等は開発/spikeとVite optimizeDepsにも現れますが、現行のHEICサムネイル対応を意味しません。[ライセンス検査](PUBLICATION_REVIEW.md)を参照してください。
 
 今回追加した責務・状態管理の確認元実装Git HEAD: `a493c20509dea1654434bf05ac8e8986da846fce`
+
+2026-11-22の取り込み高速化では、Application内の固定窓と入力/復号予算で先行準備を制御します。保存APIや画像生成設定は変えず、エラー・中断時に準備を回収してから終了します。Worker、依存、通信先は追加しません。[取り込み仕様](IMPORT_AND_PHOTOS.md)・[検証記録](../import-performance-2026-11-22.md)を参照してください。
+
+今回の変更前基準Git HEAD: `4ad902d6adef8c3d1b72e7d44063a25f74e2dd4e`
