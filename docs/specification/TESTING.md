@@ -119,3 +119,12 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 今回のコンパクト選択変更前基準Git HEAD: `444c94ca55798292a9e0abc6faf694bf7509d6b4`
 
 今回のコンパクト選択の実装・検証の確認元Git HEAD: `c01a34d9e5f3af931305431c5340c2b7b23d79b2`
+
+
+## 2026-11-22 資格情報の混入防止
+
+[Python検出回帰](../../tools/test_public_safety.py)は`python -m unittest discover -s tools -p test_public_safety.py`で実行。Esriの既知形式、引用有無の資格情報代入、空欄・コード参照、既存GitHubキー検出、検出結果に実値を返さないことを合成値で確認する。CIにも追加。
+
+[Vite保護の単体](../../tests/unit/public-env-policy.test.ts)は通常の`npm test`に含む。公開用変数の拒否、無関係な設定/非公開変数の許可、一時ディレクトリの`.env.local`と変数展開、エラーの非表示を合成値で確認する。実際のEsri接続・課金・実キー検査は対象外。
+
+今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`

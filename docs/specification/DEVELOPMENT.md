@@ -81,3 +81,12 @@ mainはレビュー済み基準。新しいタスクは独立ブランチ/未使
 DB v3/ZIP v2と`photoAlbumLinks`正本性は現行契約です。旧`Photo.visitId`を復活させたり、代表地点/手動日時を空欄だからnullにする変更は不可。移行は隔離DBで原子的ロールバック、他タブ、旧バックアップ、所属/サムネイル、内部Undoを検証します。利用者DBを勝手に移行/削除して試験しません。
 
 仕様の確認元Git HEAD: `989eae47f3ae96fa557b97eb5d7cb63e47e77f9e`
+
+
+## 2026-11-22 APIキーの開発ルール
+
+[資格情報規則](EXTERNAL_API_CREDENTIALS.md)を守る。`.env.local`をGitから除外しても、`VITE_`変数ならブラウザへ公開される。Viteは資格情報名または既知Esriトークンを持つ非空の公開用変数を設定読込時に拒否する。実値はエラーへ出さない。この保護はクライアントへ秘密を渡す実装を許可するものではない。
+
+公開検査の検出回帰は`python -m unittest discover -s tools -p test_public_safety.py`で実行し、CIも公開安全性検査の前に実行する。実キーを検査へ投入しない。Esri接続は未実装。[ローカル中継計画](../esri-key-security-2026-11-22.md)の承認後に別途実装する。
+
+今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`

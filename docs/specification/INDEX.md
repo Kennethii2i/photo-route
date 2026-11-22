@@ -61,3 +61,10 @@
 今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`
 
 今回のコンパクト選択の実装・検証の確認元Git HEAD: `c01a34d9e5f3af931305431c5340c2b7b23d79b2`
+
+
+## 外部APIの資格情報
+
+[保護規則](EXTERNAL_API_CREDENTIALS.md)と[Esri導入準備・接続計画](../esri-key-security-2026-11-22.md)を参照。混入防止は実装済み、Esri接続とPC内中継は未実装。
+
+今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
