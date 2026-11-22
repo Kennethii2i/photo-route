@@ -146,3 +146,5 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 [地図E2E](../../tests/e2e/free-world-basemaps.spec.ts)の×終了を入口の再クリック/再タップへ更新。入口60px、通常パネル幅304px以下/高さ82px以下、×なし、情報summaryの44px領域とアクセシブル名を確認。既存のhover/固定/Escape/地図余白/PC・モバイル/低画面/ヒット領域/出典/地域画像/DB不変の試験を保持する。実行結果と省略は[記録](../smaller-layer-controls-2026-11-23.md)を参照。
 
 今回レイヤーUI変更前基準Git HEAD: `cc33039be2a707393a0c21a24bd2f5ead1d00aea`
+
+今回レイヤーUI実装・検証の確認元Git HEAD: `3e2882c6896fb251e199e23ce98f529ce6554d92`
