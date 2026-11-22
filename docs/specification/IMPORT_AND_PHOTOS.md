@@ -99,3 +99,5 @@ Applicationは自動処理のfatalを復号予算の解放前に記録し、待�
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
 
 今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
+
+CI停止順序の補強・再現試験の確認元Git HEAD: `195286ede56185459ab2d01a2be8eb25e1358e20`
