@@ -77,7 +77,7 @@ PowerShellに起動完了のURLが出たら、ブラウザで **http://127.0.0.1
 - **元の高解像度写真は保存されません。** アプリとバックアップZIPが保持するのは、サムネイル・写真情報・補正・アルバム所属などです。原本は別途保管してください。
 - 写真やアルバムはGit/GitHubへ自動保存されません。管理画面からZIPバックアップを作成し、別の環境へ移すときは復元します。
 - ブラウザ・プロファイル・ホスト・ポート・HTTPSが変わると、同じ写真データは自動では表示されません。
-- 背景地図は起動時にOpenFreeMapへ通信します。閲覧地域や通信情報が提供者/CDNへ伝わり得ます。写真やExifをアップロードする機能ではありません。[プライバシー仕様](docs/specification/SECURITY_PRIVACY.md)を確認してください。
+- 背景地図は起動時にOpenFreeMapへ通信します。左下のレイヤーで標準・航空/衛星写真・地形・淡色を選べます。衛星写真はEOXの2016年・約10m級、地形はMapterhornへ選択時に追加通信します。すべて無料・APIキー不要です。閲覧地域や通信情報が提供者/CDNへ伝わり得ます。写真やExifをアップロードする機能ではありません。[プライバシー仕様](docs/specification/SECURITY_PRIVACY.md)を確認してください。
 - HEIC/HEIFのサムネイル生成、原本ビューア、自動同期、手動カバー保存等は未対応です。最初の取り込み確認にはJPEG/PNG/WebPを使ってください。[既知の制約](docs/specification/KNOWN_LIMITATIONS.md)も参照できます。
 
 ## 開発・仕様書
@@ -102,3 +102,5 @@ npm run build
 このリポジトリは過去の非公開履歴・未承認画像を含まない独立した公開版です。[公開時の選別記録](docs/specification/PUBLICATION_REVIEW.md)は当時の記録として保持しています。[Pages準備案](docs/specification/GITHUB_PAGES.md)はWeb公開に向けた未実施の案です。ローカル起動やCIによってPages公開は行われません。
 
 記載の確認元実装Git HEAD: `989eae47f3ae96fa557b97eb5d7cb63e47e77f9e`
+
+今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`

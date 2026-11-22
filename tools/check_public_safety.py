@@ -26,6 +26,20 @@ MUST_IGNORE = (
     'node_modules/probe.js', 'dist/probe.js', 'test-results/probe.txt',
 )
 
+# Never return matched values: diagnostics must contain only the kind and path.
+ESRI_CREDENTIAL_NAME = r'(?:VITE_|PUBLIC_|NEXT_PUBLIC_|REACT_APP_)?(?:ESRI|ARCGIS)_(?:API_KEY|ACCESS_TOKEN|TOKEN|KEY|CLIENT_SECRET)'
+SECRET_EXPRESSIONS = {
+    'personal-path': r'[A-Za-z]:[\\/](?:Users|home)[\\/]',
+    'provider-token': r'\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[A-Z0-9]{16}|sk-[A-Za-z0-9_-]{24,}|(?:AAPK|AAPT)[A-Za-z0-9._~-]{20,})\b',
+    'private-key': r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----',
+    'credential-assignment': r'''(?i)\b(?:api[_-]?key|access[_-]?token|password|secret)\b\s*[:=]\s*['"][^'"\r\n]{8,}['"]''',
+    'esri-credential-assignment': rf'''(?im)(?:\b{ESRI_CREDENTIAL_NAME}\b["']?\s*[:=]\s*["'][^"'\r\n]{{8,}}["']|^[ \t]*(?:export[ \t]+)?{ESRI_CREDENTIAL_NAME}[ \t]*=[ \t]*(?!["'$\r\n])[^\s#;]{{8,}})''',
+}
+
+
+def secret_findings(text):
+    return [kind for kind, expression in SECRET_EXPRESSIONS.items() if re.search(expression, text)]
+
 
 def check_ignore_policy():
     for name in MUST_IGNORE:
@@ -67,12 +81,6 @@ def check():
     assert len(assets) == len(approved_images) and images == approved_images, 'Review image provenance in SAFE_ASSETS.csv'
     for row in assets:
         assert hashlib.sha256((ROOT / row['path']).read_bytes()).hexdigest() == row['sha256']
-    expressions = {
-        'personal-path': r'[A-Za-z]:[\\/](?:Users|home)[\\/]',
-        'provider-token': r'\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[A-Z0-9]{16}|sk-[A-Za-z0-9_-]{24,})\b',
-        'private-key': r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----',
-        'credential-assignment': r'''(?i)\b(?:api[_-]?key|access[_-]?token|password|secret)\b\s*[:=]\s*['"][^'"\r\n]{8,}['"]''',
-    }
     findings = []
     for path in files:
         name = path.relative_to(ROOT).as_posix()
@@ -82,9 +90,7 @@ def check():
         if name in images:
             continue
         text = path.read_text(encoding='utf-8-sig')
-        for kind, expression in expressions.items():
-            if re.search(expression, text):
-                findings.append((name, kind))
+        findings.extend((name, kind) for kind in secret_findings(text))
     assert not findings, findings
     result = {'public_files': len(files), 'approved_images': len(images), 'secret_pattern_findings': len(findings)}
     print(json.dumps(result))

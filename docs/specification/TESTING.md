@@ -101,3 +101,50 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
 
 今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
+
+## 2026-11-22 世界背景地図の試験
+
+[単体](../../tests/unit/basemap.test.ts)は固定配信先・EOX2016版/出典・地形とラベルの順序・入力スタイル非変更・カメラ設定排除・日付変更線の表示境界を確認する。[対象E2E](../../tests/e2e/free-world-basemaps.spec.ts)は外部通信を模擬応答し、4種類/写真選択/検索/カメラ/DB全レコード不変・アルバム限定維持・切替連打/失敗/再試行・PC1440/390/320とキーボードを確認する。代表onboardingも実行する。
+
+実地図のスモークと模擬応答の結果、実行コマンド・失敗と修正・省略・未確認は[計画と検証](../free-world-basemaps-2026-11-22.md)に記録する。DB/ZIP変更がないため全移行・大量ZIP・全歴史的E2Eは繰り返さない。
+
+今回の背景地図変更前基準Git HEAD: `b3142ba0cefd217ca015f6e8c2236761d6ccfd7e`
+
+今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`
+
+## 2026-11-22 コンパクト選択の追加回帰
+
+[地図E2E](../../tests/e2e/free-world-basemaps.spec.ts)にmouse hoverでの無選択/無通信/焦点維持、隙間の移動、mouseleave、クリック固定、Escape後の再展開抑制、低画面で入口へ重なった場合、タッチを追加。旧カードの左端座標だけの試験は、実際の矩形非重複とradioの実ヒット判定へ更新する。模擬応答/合成写真だけを使い、代表onboardingを合わせる。[実行記録](../compact-map-layers-2026-11-22.md)。
+
+今回のコンパクト選択変更前基準Git HEAD: `444c94ca55798292a9e0abc6faf694bf7509d6b4`
+
+今回のコンパクト選択の実装・検証の確認元Git HEAD: `c01a34d9e5f3af931305431c5340c2b7b23d79b2`
+
+
+## 2026-11-22 資格情報の混入防止
+
+[Python検出回帰](../../tools/test_public_safety.py)は`python -m unittest discover -s tools -p test_public_safety.py`で実行。Esriの既知形式、引用有無の資格情報代入、空欄・コード参照、既存GitHubキー検出、検出結果に実値を返さないことを合成値で確認する。CIにも追加。
+
+[Vite保護の単体](../../tests/unit/public-env-policy.test.ts)は通常の`npm test`に含む。公開用変数の拒否、無関係な設定/非公開変数の許可、一時ディレクトリの`.env.local`と変数展開、エラーの非表示を合成値で確認する。実際のEsri接続・課金・実キー検査は対象外。
+
+今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
+
+今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`
+
+
+## 2026-11-22 地域画像の検証
+
+[basemap単体](../../tests/unit/basemap.test.ts)でbounds・min/maxzoom・供給URL・出典・レイヤー順・他背景からの除外を確認。[地図E2E](../../tests/e2e/free-world-basemaps.spec.ts)に対象地域/縮尺でのみ要求すること、native上限以上を要求しないこと、認証なし、対象外の無要求、地域404でもEOXを残して再試行、DB/カメラ不変を追加。外部は模擬応答。実配信/画質の少数確認は[実行記録](../regional-imagery-2026-11-22.md)で区別する。
+
+今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`
+
+今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`
+
+
+## 2026-11-23 レイヤーUI縮小の回帰
+
+[地図E2E](../../tests/e2e/free-world-basemaps.spec.ts)の×終了を入口の再クリック/再タップへ更新。入口60px、通常パネル幅304px以下/高さ82px以下、×なし、情報summaryの44px領域とアクセシブル名を確認。既存のhover/固定/Escape/地図余白/PC・モバイル/低画面/ヒット領域/出典/地域画像/DB不変の試験を保持する。実行結果と省略は[記録](../smaller-layer-controls-2026-11-23.md)を参照。
+
+今回レイヤーUI変更前基準Git HEAD: `cc33039be2a707393a0c21a24bd2f5ead1d00aea`
+
+今回レイヤーUI実装・検証の確認元Git HEAD: `3e2882c6896fb251e199e23ce98f529ce6554d92`

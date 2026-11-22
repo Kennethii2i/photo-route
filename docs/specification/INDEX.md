@@ -8,6 +8,10 @@
 
 その後の[大きなJPEGの自動取り込み・限定対応と検証](../automatic-large-jpeg-2026-11-22.md)では、長辺制限で拒否される60MP以下のJPEGを原本選択だけで処理します。試作64MPと製品対応範囲を区別します。
 
+無料の世界背景4種類は[地図仕様](MAP_AND_GEO.md)と[計画・検証](../free-world-basemaps-2026-11-22.md)を参照してください。
+
+地図選択の簡素化・hoverと無料高精細画像の調査は[追加計画・検証](../compact-map-layers-2026-11-22.md)を参照してください。
+
 ## 読む順序
 
 初参加者はルートの[README](../../README.md)で環境を作り、[CONTRIBUTING](../../CONTRIBUTING.md)と[AGENTS](../../AGENTS.md)で共同開発ルールを確認します。仕様は PRODUCT → ARCHITECTURE → DEVELOPMENT → DATA_MODEL → STORAGE_AND_BACKUP の順に読み、変更対象の機能文書とTESTINGへ進んでください。
@@ -53,3 +57,40 @@
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
 
 今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
+
+今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`
+
+今回のコンパクト選択の実装・検証の確認元Git HEAD: `c01a34d9e5f3af931305431c5340c2b7b23d79b2`
+
+
+## 外部APIの資格情報
+
+[保護規則](EXTERNAL_API_CREDENTIALS.md)と[Esri導入準備・接続計画](../esri-key-security-2026-11-22.md)を参照。混入防止は実装済み、Esri接続とPC内中継は未実装。
+
+今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
+
+今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`
+
+
+## 現在の航空写真計画
+
+所有者の変更依頼によりEsri世界高画質/キー/中継案を取り下げ、[日本・米国本土のキー不要画像](../regional-imagery-2026-11-22.md)に変更。以前のEsri接続提案は現在の作業計画ではない。資格情報保護は維持する。
+
+今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`
+
+今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`
+
+
+## レイヤーUIの最新変更
+
+[2026-11-23の縮小と×撤去](../smaller-layer-controls-2026-11-23.md)が現在の選択UI。基本4レイヤーと地域画像機能はそのまま。
+
+今回レイヤーUI変更前基準Git HEAD: `cc33039be2a707393a0c21a24bd2f5ead1d00aea`
+
+今回レイヤーUI実装・検証の確認元Git HEAD: `3e2882c6896fb251e199e23ce98f529ce6554d92`
+
+## 地図レイヤーのmain統合確認
+
+[2026-11-23の承認範囲・バックアップ・統合検証](../map-layers-main-integration-2026-11-23.md)。現UI採用と無料4背景/地域画像のローカルmain統合が対象で、Push/公開は含まない。
+
+統合対象の確認元Git HEAD: `ea94e9ba0b153e7472712cd3af3be5fa42523791`

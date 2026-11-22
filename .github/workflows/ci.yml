@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Test public safety detection
+        run: python3 -m unittest discover -s tools -p test_public_safety.py
       - name: Check public safety
         run: python3 tools/check_public_safety.py
       - uses: actions/setup-node@v4

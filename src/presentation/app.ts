@@ -19,6 +19,7 @@ import { PhotoAlbumEditor } from './photo-album-editor';
 import { displayCaptureClock } from './date-display';
 import { backupCapacityText, backupCapacitySummary } from './backup-capacity';
 import { PhotoCorrectionDrafts, type CorrectionFields } from './photo-correction-draft';
+import { createBasemapControl } from './basemap-control';
 
 const element = <T extends HTMLElement>(selector: string): T => {
   const found = document.querySelector<T>(selector);
@@ -411,6 +412,11 @@ export async function startApp(): Promise<void> {
     if (visitCandidates.count) void renderVisitCandidates(); else ++visitCandidateGeneration;
   }, () => {}, () => {
   }, zoom => { element('#map-zoom-level').textContent = `ズーム: ${zoom.toFixed(1)}`; }, id => db.getThumbnail(id));
+  const basemapControl = createBasemapControl(element('.map-panel'), id => { void map.chooseBasemap(id); }, () => {
+    // Match the existing middle-width detail behavior: reserve usable map space.
+    if (matchMedia('(min-width: 701px) and (max-width: 1100px)').matches && layout.isDetailOpen()) layout.closeLeft();
+  });
+  map.onBasemapChange(state => basemapControl.update(state));
   map.onPhotoGroup(ids => layout.requestNavigation(() => {
     if (!mapPhotoGroup) regularPhotoScroll = element('#left-panel').scrollTop;
     mapPhotoGroup = { ids: new Set(ids), tripId: tripSelect.value };
@@ -424,6 +430,7 @@ export async function startApp(): Promise<void> {
     returnToVisitId = null; visitReturn = null;
   };
   map.onBackgroundClick(() => {
+    if (basemapControl.dismiss()) return;
     if (photoAlbumEditor.isOpen || visitPhotoEditor.isOpen || correctionLeave.open || correctionWrites
       || element<HTMLDialogElement>('#management-panel').open || element<HTMLDialogElement>('#photo-import-dialog').open) return;
     if (!visitMapChooser.hidden) { visitMapChooser.hidden = true; return; }

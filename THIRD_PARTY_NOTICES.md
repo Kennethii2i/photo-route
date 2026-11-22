@@ -38,3 +38,23 @@ Photo Route本体のコードは[MIT](LICENSE)です。この許諾は、権利�
 固定SVGは本体ソース中のパスで、外部アイコンファイルをコピーしていません。外部アイコンライブラリの新規採用はありません。第三者素材を追加する際は出典/条件/クレジットを記録してください。
 
 同梱画像23件は[合成素材台帳](docs/specification/SAFE_ASSETS.md)のfixtureだけです。実写真、過去スクリーンショット、参考デザイン画像、写真バックアップは含みません。本体コードへのMIT適用を、未知の画像や地図の権利へ拡張しないでください。
+
+## 2026-11-22 世界背景の追加配信
+
+- OpenFreeMap Libertyも利用する。[公式内訳](https://github.com/hyperknot/openfreemap/blob/main/LICENSE.md)ではOSM LibertyはOSM Bright由来、styleコードBSD-3-Clause・デザインCC BY 4.0。配信styleをブラウザ内で合成し、帰属を維持する。地図ファイル/フォント/スプライトをリポジトリに同梱しない。
+- EOX cloudlessは**2016版限定**。[公式FAQ](https://cloudless.eox.at/documentation/faq)がCC BY 4.0、商用含む無料公開endpoint利用、Fair Use、SLAなしを明示。正規帰属は「EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016)」。地図上で帰属/CC BYリンクを表示する。2018年以降へ自動更新せず、原タイルの再配布/販売/独自キャッシュは追加しない。
+- Mapterhornは[公開配信](https://mapterhorn.com/data-access/)を実行時に取得し、地図上の[出典一覧](https://mapterhorn.com/attribution/)を保持する。提供元コードのBSD-3と、各元標高資料の利用条件は別。元データ/タイルは同梱しない。
+
+本体MITを外部地図へ適用しない。今回追加するnpm依存はない。[配信条件と検証記録](docs/free-world-basemaps-2026-11-22.md)。
+
+
+## 日本・米国本土の地域航空写真（2026-11-22）
+
+- 地理院seamlessphoto z14–18：[タイル一覧](https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto)、[コンテンツ規約](https://www.gsi.go.jp/kikakuchousei/kikakuchousei40182.html)。現行はPDL1.0と個別の第三者条件。地図上は地理院タイルから一覧へのリンクと、該当範囲用の「GRUS画像（© Axelspace）」を日本sourceの帰属へ常時表示する。写真を加工/同梱せず、閲覧用タイルを公開endpointから読む。
+- USGSImageryOnly：[現行サービス](https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer)、[公式サービス案内](https://www.usgs.gov/faqs/what-are-urls-imagery-services-national-map-and-are-they-cached-or-dynamic)。米国本土の要求矩形に限定、z14–16。主に公共領域のNAIP等、地域により画像が異なる。アラスカのSPOT等を今回の対象へ含めず、サービス全域を一律CC0と称さない。地図上は「USDA, USGS The National Map: Orthoimagery」とサービスへのリンクを維持。
+
+原画像・タイルをリポジトリへ同梱しない。アカウント・キー不要で通常の閲覧要求を行い、大量取得/原ラスタexport/独自永続キャッシュは追加しない。提供者の利用条件は本体MITへ置き換えず、SLAや将来の無料継続を保証しない。
+
+今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`
+
+今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`

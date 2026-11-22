@@ -3,7 +3,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { photoPoints, visitPoints, type PointFeature } from '../domain/map';
 import type { Photo, Thumbnail, Visit } from '../domain/model';
-import { localBlankBasemap, openFreeMapTrial, type BasemapConfig } from '../infrastructure/basemap';
+import { basemaps, loadBasemapStyle, localBlankBasemap, openFreeMapTrial, regionalImagerySourceIds, regionalImageryWarning, type BasemapConfig, type BasemapId } from '../infrastructure/basemap';
+import { worldBounds } from './map-bounds';
 import { clusterCandidateSource, type CandidateSource } from './map-candidates';
 import type { MapInsets } from './map-viewport';
 import { spiderLayout } from './map-spider-layout';
@@ -12,6 +13,7 @@ import type { ErrorGuide } from './error-notice';
 setWorkerUrl(workerUrl);
 export type { CandidateSource } from './map-candidates';
 export type MapCandidates = { photos: CandidateSource; visits: CandidateSource; kind: 'cluster' | 'overlap' };
+export type BasemapState = { id: BasemapId; state: 'loading' | 'ready' | 'error'; message: string };
 
 export class PhotoMap {
   private readonly map: Map | null = null;
@@ -33,6 +35,17 @@ export class PhotoMap {
   private viewportKey: string | null = null;
   private basemapEnabled = false;
   private basemapError = false;
+  private basemapId: BasemapId = 'standard';
+  private basemapGeneration = 0;
+  private appliedBasemapGeneration = 0;
+  private basemapStyleLoaded = false;
+  private requiredBackgroundReady = false;
+  private regionalImageryUnavailable = false;
+  private pendingRegionalTiles = new Set<{ state?: string }>();
+  private basemapRequest: AbortController | null = null;
+  private basemapLoadTimer: ReturnType<typeof setTimeout> | null = null;
+  private basemapState: BasemapState = { id: 'standard', state: 'loading', message: '標準地図を読み込んでいます。' };
+  private basemapListener: ((state: BasemapState) => void) | null = null;
   private showPhotos = true;
   private showVisits = false;
   private focusedPhotoIds = new Set<string>();
@@ -92,12 +105,36 @@ export class PhotoMap {
       map.on('zoomend', () => this.onZoomChange(map.getZoom()));
       map.on('idle', () => this.syncThumbnailMarkers());
       map.on('idle', () => this.refreshSelectedCluster());
+      map.on('sourcedataloading', event => {
+        if (this.basemapId !== 'satellite' || this.appliedBasemapGeneration !== this.basemapGeneration || !regionalImagerySourceIds.includes(event.sourceId)) return;
+        this.checkRegionalTiles();
+        const tile = (event as typeof event & { tile?: { state?: string } }).tile;
+        if (tile) this.pendingRegionalTiles.add(tile);
+      });
+      map.on('sourcedataabort', event => {
+        const tile = (event as typeof event & { tile?: { state?: string } }).tile;
+        if (tile) this.pendingRegionalTiles.delete(tile);
+      });
+      map.on('idle', () => this.checkRegionalTiles());
       map.on('moveend', () => this.syncThumbnailMarkers());
       map.on('style.load', () => {
-        if (this.basemapEnabled) { this.basemapError = false; this.reportFault(null); }
+        if (this.basemapEnabled && this.appliedBasemapGeneration === this.basemapGeneration) {
+          this.basemapStyleLoaded = true;
+          this.finishBasemapLoading();
+        }
         if (!this.loaded || map.getSource('photos')) return;
         this.installLayers();
         this.update(this.photos, this.visits, false);
+      });
+      map.on('sourcedata', event => {
+        const regionalTile = (event as typeof event & { tile?: { state?: string } }).tile;
+        if (regionalTile && regionalImagerySourceIds.includes(event.sourceId) && regionalTile.state === 'loaded') this.pendingRegionalTiles.delete(regionalTile);
+        if (this.appliedBasemapGeneration !== this.basemapGeneration || event.sourceId !== this.requiredBackgroundSource()) return;
+        // Source metadata or an errored tile is not evidence that imagery rendered.
+        const tile = (event as typeof event & { tile?: { state?: string } }).tile;
+        if (tile?.state === 'loaded') {
+          this.requiredBackgroundReady = true; this.finishBasemapLoading();
+        }
       });
       map.on('load', () => {
         if (!map.getSource('photos')) this.installLayers();
@@ -121,20 +158,35 @@ export class PhotoMap {
       });
       map.on('error', event => {
         if (this.basemapEnabled) {
+          if (this.appliedBasemapGeneration !== this.basemapGeneration) return;
           const context = event as typeof event & { sourceId?: string; tile?: { tileID?: { key?: string } } };
           if (context.sourceId === 'photos' || context.sourceId === 'visits') return;
+          if (context.sourceId && regionalImagerySourceIds.includes(context.sourceId)) {
+            // Coverage gaps must leave the global image and all photo interactions usable.
+            this.warnRegionalImagery();
+            return;
+          }
+          if (context.sourceId && context.sourceId === this.requiredBackgroundSource()) {
+            this.reportBasemap('error', '背景地図の一部を取得できません。再試行するか、別の地図を選んでください。');
+            this.reportFault(this.basemapGuide('画像または標高タイルを取得できません。'));
+            return;
+          }
           if (!context.sourceId && !context.tile && map.isStyleLoaded()) return;
           if (context.tile || context.sourceId && map.isStyleLoaded()) {
             this.tileErrors.add(context.tile?.tileID?.key ?? context.sourceId ?? 'tile');
             if (this.tileErrorTimer === null) this.tileErrorTimer = setTimeout(() => {
               this.tileErrorTimer = null;
-              if (this.tileErrors.size >= 3 && !this.hasBackgroundContent()) this.reportFault(this.basemapGuide('複数の地図タイルを取得できません。通信状態を確認してください。'));
+              if (this.tileErrors.size >= 3 && !this.hasBackgroundContent()) {
+                this.reportBasemap('error', '背景地図の一部を取得できません。再試行するか、別の地図を選んでください。');
+                this.reportFault(this.basemapGuide('複数の地図タイルを取得できません。通信状態を確認してください。'));
+              }
               this.tileErrors.clear();
             }, 1500);
             return;
           }
           this.basemapEnabled = false;
           this.basemapError = true;
+          this.reportBasemap('error', '背景地図を取得できません。再試行するか、別の地図を選んでください。');
           this.onBasemapState(false);
           map.setStyle(localBlankBasemap.style);
           this.reportFault(this.basemapGuide(event.error.message));
@@ -169,10 +221,72 @@ export class PhotoMap {
     catch { return false; }
   }
   private retryBasemap(): void {
-    if (!this.map || this.failed) return;
-    this.tileErrors.clear(); this.basemapEnabled = true; this.basemapError = false; this.reportFault(null);
-    try { this.map.setStyle(openFreeMapTrial.style, { diff: false }); }
-    catch (error) { this.basemapEnabled = false; this.basemapError = true; this.reportFault(this.basemapGuide(String(error))); }
+    void this.chooseBasemap(this.basemapId);
+  }
+
+  onBasemapChange(listener: (state: BasemapState) => void): void { this.basemapListener = listener; listener(this.basemapState); }
+  private requiredBackgroundSource(): string | null {
+    return this.basemapId === 'satellite' ? 'world-imagery' : this.basemapId === 'terrain' ? 'world-elevation' : null;
+  }
+  private finishBasemapLoading(): void {
+    if (!this.basemapStyleLoaded || this.requiredBackgroundSource() && !this.requiredBackgroundReady || this.basemapState.state === 'error') return;
+    if (this.basemapLoadTimer !== null) { clearTimeout(this.basemapLoadTimer); this.basemapLoadTimer = null; }
+    this.basemapError = false; this.reportFault(null);
+    this.reportBasemap('ready', this.regionalImageryUnavailable ? regionalImageryWarning : '');
+  }
+  private warnRegionalImagery(): void {
+    if (!this.basemapEnabled || this.basemapId !== 'satellite' || this.regionalImageryUnavailable) return;
+    this.regionalImageryUnavailable = true;
+    if (this.basemapState.state === 'ready') this.reportBasemap('ready', regionalImageryWarning);
+  }
+  private checkRegionalTiles(): void {
+    // MapLibre 6.18 omits HTTP 404 from error events. Use the tiles supplied in
+    // source events, and release completed/aborted references even while panning.
+    for (const tile of this.pendingRegionalTiles) {
+      if (tile.state === 'errored') this.warnRegionalImagery();
+      if (tile.state !== 'loading' && tile.state !== 'reloading') this.pendingRegionalTiles.delete(tile);
+    }
+  }
+  private reportBasemap(state: BasemapState['state'], message: string): void {
+    this.basemapState = { id: this.basemapId, state, message }; this.basemapListener?.(this.basemapState);
+  }
+  async chooseBasemap(id: BasemapId): Promise<void> {
+    if (!this.map || this.failed) { this.reportBasemap('error', '地図を起動できません。写真一覧は利用できます。'); return; }
+    this.basemapRequest?.abort();
+    if (this.basemapLoadTimer !== null) { clearTimeout(this.basemapLoadTimer); this.basemapLoadTimer = null; }
+    const generation = ++this.basemapGeneration, request = new AbortController();
+    this.basemapRequest = request; this.basemapId = id;
+    this.regionalImageryUnavailable = false;
+    this.pendingRegionalTiles.clear();
+    this.tileErrors.clear();
+    if (this.tileErrorTimer !== null) { clearTimeout(this.tileErrorTimer); this.tileErrorTimer = null; }
+    this.reportFault(null);
+    this.reportBasemap('loading', `${basemaps.find(item => item.id === id)!.label}を読み込んでいます。`);
+    const timeout = setTimeout(() => request.abort(), 15_000);
+    let styleFetched = false;
+    try {
+      const style = await loadBasemapStyle(id, request.signal);
+      if (generation !== this.basemapGeneration) return;
+      styleFetched = true;
+      this.basemapStyleLoaded = false; this.requiredBackgroundReady = false;
+      this.basemapEnabled = true; this.basemapError = false; this.appliedBasemapGeneration = generation;
+      this.clearSpider(); this.clearThumbnailMarkers();
+      this.map.setStyle(style, { diff: false });
+      this.basemapLoadTimer = setTimeout(() => {
+        this.basemapLoadTimer = null;
+        if (generation !== this.basemapGeneration || this.basemapState.state !== 'loading') return;
+        this.reportBasemap('error', '背景地図の読み込みに時間がかかっています。再試行するか、別の地図を選んでください。');
+        this.reportFault(this.basemapGuide('背景地図の読み込みが完了しません。'));
+      }, 15_000);
+    } catch {
+      if (generation !== this.basemapGeneration) return;
+      this.reportBasemap('error', styleFetched ? '背景地図を表示できません。再試行するか、別の地図を選んでください。'
+        : '背景地図を切り替えられません。前の表示を保持しています。再試行するか、別の地図を選んでください。');
+      this.reportFault(this.basemapGuide('背景地図の表示設定を取得できません。'));
+    } finally {
+      clearTimeout(timeout);
+      if (generation === this.basemapGeneration) this.basemapRequest = null;
+    }
   }
 
   onBackgroundClick(handler: () => void): void { this.backgroundClick = handler; }
@@ -262,7 +376,9 @@ export class PhotoMap {
     const width = container.clientWidth - insets.left - insets.right;
     const height = container.clientHeight - insets.top - insets.bottom;
     if (width < 64 || height < 64) return false;
-    const margin = Math.min(40, width / 4, height / 4), position = map.project(point.geometry.coordinates);
+    const coordinates = point.geometry.coordinates;
+    const wrapped: [number, number] = [coordinates[0] + 360 * Math.round((map.getCenter().lng - coordinates[0]) / 360), coordinates[1]];
+    const margin = Math.min(40, width / 4, height / 4), position = map.project(wrapped);
     const x = Math.max(insets.left + margin, Math.min(container.clientWidth - insets.right - margin, position.x));
     const y = Math.max(insets.top + margin, Math.min(container.clientHeight - insets.bottom - margin, position.y));
     if (Math.abs(position.x - x) > 1 || Math.abs(position.y - y) > 1) map.panBy([position.x - x, position.y - y], { duration: 0 });
@@ -469,6 +585,10 @@ export class PhotoMap {
   }
 
   setBasemap(enabled: boolean): void {
+    if (enabled) { void this.chooseBasemap(this.basemapId); return; }
+    this.basemapRequest?.abort(); ++this.basemapGeneration;
+    this.pendingRegionalTiles.clear();
+    if (this.basemapLoadTimer !== null) { clearTimeout(this.basemapLoadTimer); this.basemapLoadTimer = null; }
     if (!this.map || this.failed || this.basemapEnabled === enabled) return;
     this.basemapEnabled = enabled;
     this.basemapError = false;
@@ -552,11 +672,7 @@ export class PhotoMap {
       map.easeTo({ center: coordinates[0]!, zoom: singleZoom, duration: 0,
         offset: [(padding.left - padding.right) / 2, (padding.top - padding.bottom) / 2] });
     } else {
-      const west = Math.min(...coordinates.map(point => point[0]));
-      const east = Math.max(...coordinates.map(point => point[0]));
-      const south = Math.min(...coordinates.map(point => point[1]));
-      const north = Math.max(...coordinates.map(point => point[1]));
-      map.fitBounds([[west, south], [east, north]], { padding, maxZoom: 17, duration: 0 });
+      map.fitBounds(worldBounds(coordinates), { padding, maxZoom: 17, duration: 0 });
     }
     this.onZoomChange(map.getZoom());
     return coordinates.length > 0;
