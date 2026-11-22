@@ -10,7 +10,7 @@ flowchart LR
   T --> F["複数ファイル選択"]
   F --> I["importFiles: Trip検証"]
   I --> J["ジョブ作成"]
-  J --> V["1枚ずつ検証・SHA-256"]
+  J --> V["最大2件の準備: 検証・SHA-256"]
   V --> D["重複判定"]
   D --> M["Exif解析・サムネイル試行"]
   M --> S["Photo/Thumbnailの原子的保存"]
@@ -43,7 +43,7 @@ flowchart LR
 
 GPSは測地系の証拠で確認済み/参考/不可を区別し、日時は元の時計と時差を別々に保持します。[位置仕様](MAP_AND_GEO.md)と[モデル](DATA_MODEL.md)を参照してください。
 
-`makeThumbnail()`は画像を順次処理し、長辺512px以下のJPEG（quality 0.82、1MiB以下）をCanvasで生成します。JPEG/PNGはブラウザのExif orientation適用を利用し、WebPは別途変換します。ブラウザ間で同一挙動を全面保証していません。ImageBitmapをcloseし、元バイト列をDBへ保存しません。
+`makeThumbnail()`は長辺512px以下のJPEG（quality 0.82、1MiB以下）をCanvasで生成します。JPEG/PNGはブラウザのExif orientation適用を利用し、WebPは別途変換します。ブラウザ間で同一挙動を全面保証していません。ImageBitmapをcloseし、元バイト列をDBへ保存しません。
 
 ## 進捗・中断・部分成功
 
@@ -68,3 +68,17 @@ GPSは測地系の証拠で確認済み/参考/不可を区別し、日時は元
 根拠: [取り込み](../../src/application/import-photos.ts)、[失敗注入単体試験](../../tests/unit/safety-ux.test.ts)、[中断E2E](../../tests/e2e/phase4-interruption.spec.ts)。
 
 今回変更の確認基準Git HEAD: `26093c16cec1924c8110efe5f932bd7159a8ca13`
+
+## 2026-11-22 上限付きの並行準備
+
+準備中と保存待ちを合わせて最大2件の固定窓を使います。読込・検証・ハッシュ・Exif・サムネイルを先行準備し、Photo/Thumbnailの保存、結果計上、Job進捗保存は入力順で1件ずつ行います。窓を進めるのはその進捗保存と通知が成功した後です。`PhotoImporter(db, 1)`は比較検証用の逐次準備で、通常UIは既定の2を使います。
+
+読込前に入力バッファ合計64MiB、復号前に宣言画素合計60MPの内部予算を確保します。大きい入力は待機して直列化し、入力を新しく拒否する上限ではありません。これはブラウザ全体のメモリー上限ではなく、バイト列の一時コピー、デコーダー内部、GCのピークは別です。復号対象外の大JPEG/HEIC等は予算待ちで停止せず、従来の検証・部分成功へ進みます。形式別上限・512px・JPEG品質・向き処理は変更しません。
+
+準備時の重複照会に加え、入力順の保存直前にも最新DBを照会します。同一バッチの先行入力が保存できた場合だけ後の同じ画像をスキップし、先行保存が失敗した場合は後の入力を処理できます。`savePhoto()`内の原子的な重複/Trip生存検証も維持します。
+
+中断後は窓を補充せず、先読み済みの次写真を保存しません。すでに処理中の1枚は確定し得ます。進捗保存・callback失敗は全体へ伝え、確定済み写真を保持し、準備中の処理を回収してから終了します。終了後の保存や通知は残しません。
+
+根拠: [取り込み](../../src/application/import-photos.ts)、[制御単体試験](../../tests/unit/import-pipeline.test.ts)、[ブラウザ安全試験](../../tests/e2e/import-pipeline.spec.ts)、[計画と検証](../import-performance-2026-11-22.md)。DB v3/ZIP v2と保存形式は変更なし。
+
+今回の変更前基準Git HEAD: `4ad902d6adef8c3d1b72e7d44063a25f74e2dd4e`

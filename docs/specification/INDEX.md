@@ -4,6 +4,8 @@
 
 2026-11-22の6項目の改善は、[機能一覧](FEATURES.md)、[変更履歴](CHANGELOG.md)、[改善計画・検証結果・統合前確認](../improvement-plan-2026-11-22.md)から確認できます。
 
+同日の[写真取り込み高速化の計画・検証と後続課題](../import-performance-2026-11-22.md)は別の変更単位です。
+
 ## 読む順序
 
 初参加者はルートの[README](../../README.md)で環境を作り、[CONTRIBUTING](../../CONTRIBUTING.md)と[AGENTS](../../AGENTS.md)で共同開発ルールを確認します。仕様は PRODUCT → ARCHITECTURE → DEVELOPMENT → DATA_MODEL → STORAGE_AND_BACKUP の順に読み、変更対象の機能文書とTESTINGへ進んでください。

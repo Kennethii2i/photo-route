@@ -75,3 +75,15 @@ npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line
 これらは現行仕様の対象試験です。今回実行済みのコマンド/件数と未実行範囲は[改善計画・結果](../improvement-plan-2026-11-22.md)に記録します。
 
 今回変更の確認基準Git HEAD: `26093c16cec1924c8110efe5f932bd7159a8ca13`
+
+## 2026-11-22 取り込み並行準備の検証
+
+[単体試験](../../tests/unit/import-pipeline.test.ts)は最大2件の固定窓、入力/復号予算の待機と解放、順序、同一バッチ重複と先行保存失敗、他旅行コピー、中断、Job/通知失敗を検証します。[E2E](../../tests/e2e/import-pipeline.spec.ts)はJPEG/PNG/WebP、80MPとHEIC/HEIFの部分成功、GPS/日時/向き・サムネイルバイト列の逐次/並行一致、Photo/Thumbnail書込失敗の原子性、他接続の重複/Trip削除を確認します。既存の中断E2Eと代表onboardingも合わせて実行します。
+
+任意の性能比較は、Pillowを利用できるPython環境で`python tools/generate_import_benchmark.py`を実行し、Playwright Chromium導入後に`node tools/benchmark_import.mjs`を使います。既定は合成48枚・3回、専用ポート18262です。PowerShellでは`$env:PHOTO_ROUTE_BENCH_COUNT='650'; $env:PHOTO_ROUTE_BENCH_ROUNDS='1'`で650枚の比較を選べます。ポートは未使用を確認し、必要なら`PHOTO_ROUTE_BENCH_PORT`を変えます。macOS/Linuxでは同名環境変数をコマンド前に設定します。
+
+入力は生成された`coverage/import-benchmark-24mp.jpg`のみ、出力は枚数・日時・UUIDを含む`coverage/import-benchmark-*.json`です。排他的に新規作成し、以前の計測結果を上書きしません。実写真・既存DBを渡す経路を使いません。毎回専用DBを作り、ブラウザ/サーバーは終了時に閉じます。合成画像の画素は共通、ハッシュはCOMコメントで変えているため、多様な実写真の性能・メモリーピークの保証ではありません。CIへ性能時間の固定閾値は追加しません。
+
+[計画・実行結果・未確認事項](../import-performance-2026-11-22.md)。
+
+今回の変更前基準Git HEAD: `4ad902d6adef8c3d1b72e7d44063a25f74e2dd4e`
