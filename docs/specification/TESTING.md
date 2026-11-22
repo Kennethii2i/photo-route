@@ -99,3 +99,5 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 [検証記録](../automatic-large-jpeg-2026-11-22.md)に実行件数・ブラウザ版・nativeメモリー実測と限界を記録します。返却サイズ検査やWorker terminateを内部メモリーのハード上限とは扱いません。DB/ZIP版は変更しないため、全移行/大量ZIP/全歴史的E2Eは今回繰り返しません。
 
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
+
+今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
