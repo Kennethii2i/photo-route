@@ -18,6 +18,9 @@ export type AlbumMembershipRecoveryEntry = { sequence?: number; id: string; kind
   requestHash: string; expectedTrip: Trip; expectedAlbums: Visit[]; changes: { beforePhoto: Photo; beforeLinks: PhotoAlbumLink[]; afterLinks: PhotoAlbumLink[] }[]; undoneAt: string | null };
 export type RecoveryEntry = LegacyRecoveryEntry | BatchRecoveryEntry | AlbumMembershipRecoveryEntry;
 export type AlbumMembershipOperationStatus = 'absent' | 'applied' | 'undone' | 'changed-after-save' | 'unknown';
+export class EditConflict extends Error {
+  constructor() { super('別の画面で保存内容が変更されました。入力を保持しています。最新状態を確認してから保存してください。'); this.name = 'EditConflict'; }
+}
 export class AlbumMembershipConflict extends Error {
   readonly needsReload = true;
   constructor(public readonly photoId: string | null, public readonly reason: string) {
@@ -363,12 +366,13 @@ export class LibraryDb {
     } catch (error) { tx.abort(); await done.catch(() => undefined); throw error; }
     await done;
   }
-  async updateVisit(input: Visit): Promise<void> {
+  async updateVisit(input: Visit, expected?: Visit): Promise<void> {
     const visit = visitSchema.parse(input);
     const tx = this.db.transaction(['trips', 'visits', 'photos', 'recovery'], 'readwrite'); const done = complete(tx);
     try {
       const previous: Visit | undefined = await request(tx.objectStore('visits').get(visit.id));
       if (!previous || previous.tripId !== visit.tripId || previous.deletedAt) throw new Error('アルバムを更新できません');
+      if (expected && !sameRecord(previous, expected)) throw new EditConflict();
       if (visit.deletedAt) throw new Error('アルバムの削除は現在利用できません');
       const trip: Trip | undefined = await request(tx.objectStore('trips').get(visit.tripId));
       if (!trip || trip.deletedAt) throw new Error('Trip not found');
@@ -574,11 +578,14 @@ export class LibraryDb {
       return await albumEntryApplied(tx, entry) ? 'applied' : 'changed-after-save';
     } catch { return 'unknown'; }
   }
-  async updatePhotoCorrection(photoId: string, change: { gpsCorrection: Photo['gpsCorrection'] } | { timeCorrection: Photo['timeCorrection'] }): Promise<void> {
+  async updatePhotoCorrection(photoId: string, change: { gpsCorrection: Photo['gpsCorrection'] } | { timeCorrection: Photo['timeCorrection'] }, expected?: { gpsCorrection: Photo['gpsCorrection'] } | { timeCorrection: Photo['timeCorrection'] }): Promise<void> {
     const tx = this.db.transaction(['photos', 'recovery'], 'readwrite'); const done = complete(tx);
     try {
       const before: Photo | undefined = await request(tx.objectStore('photos').get(photoId));
       if (!before || before.deletedAt) throw new Error('写真が見つかりません');
+      if (expected && ('gpsCorrection' in change
+        ? !('gpsCorrection' in expected) || !sameRecord(before.gpsCorrection, expected.gpsCorrection)
+        : !('timeCorrection' in expected) || !sameRecord(before.timeCorrection, expected.timeCorrection))) throw new EditConflict();
       const after = photoSchema.parse({ ...before, ...change, updatedAt: new Date().toISOString() });
       if (JSON.stringify(before) !== JSON.stringify(after)) {
         tx.objectStore('photos').put(after);
@@ -673,6 +680,13 @@ export class LibraryDb {
     tx.objectStore('jobs').put(job); await done;
   }
   async listJobs(): Promise<ImportJob[]> { return request(this.db.transaction('jobs').objectStore('jobs').getAll()); }
+  async backupCounts(): Promise<{ trips: number; visits: number; photos: number; thumbnails: number; links: number }> {
+    const tx = this.db.transaction(['trips', 'visits', 'photos', 'thumbnails', 'photoAlbumLinks']);
+    const [trips, visits, photos, thumbnails, links] = await Promise.all(
+      ['trips', 'visits', 'photos', 'thumbnails', 'photoAlbumLinks'].map(name => request(tx.objectStore(name).count())),
+    );
+    return { trips: trips!, visits: visits!, photos: photos!, thumbnails: thumbnails!, links: links! };
+  }
   async markInterruptedJobs(): Promise<void> {
     const jobs = (await this.listJobs()).filter(x => x.state === 'running');
     for (const job of jobs) await this.saveJob({ ...job, state: 'interrupted', lastError: '前回の取り込みは中断されました' });

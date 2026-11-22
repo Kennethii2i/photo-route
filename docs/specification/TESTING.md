@@ -64,4 +64,12 @@ npx playwright test tests/e2e/developer-onboarding.spec.ts --reporter=line
 
 初回公開準備時の実行結果は[当時の検証記録](PUBLICATION_REVIEW.md)にあります。現在の検証結果とは区別してください。
 
-仕様の確認元Git HEAD: `989eae47f3ae96fa557b97eb5d7cb63e47e77f9e`
+## 2026-11-22 安全性・操作性の追加回帰
+
+[単体試験](../../tests/unit/safety-ux.test.ts)は補正の送信項目別同期/保存中追加入力、ZIP件数境界と各上限、重複結果の一回計上、進捗保存失敗後の非完了を検証します。[追加E2E](../../tests/e2e/safety-ux-improvements.spec.ts)は2接続の編集競合、異なる補正欄の両立、recovery追加失敗時の本体/履歴ロールバック、競合の明示的基準採用と遅延応答、仮想Tab窓越え/resize/範囲外、PC1440/390/320の案内を対象にします。画像出力は`test-results/safety-ux/`で、合成データのみです。
+
+[中断試験](../../tests/e2e/phase4-interruption.spec.ts)は生存Tripを明示作成し、null拒否でjob/Photoを作らない試験も持ちます。context単位で外部通信を遮断し、再作成ページも含めます。再起動後のrunning→interruptedはAPIを明示実行する検証で、自動起動処理の保証ではありません。
+
+これらは現行仕様の対象試験です。今回実行済みのコマンド/件数と未実行範囲は[改善計画・結果](../improvement-plan-2026-11-22.md)に記録します。
+
+今回変更の確認基準Git HEAD: `26093c16cec1924c8110efe5f932bd7159a8ca13`

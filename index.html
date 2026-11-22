@@ -18,6 +18,7 @@
         <h2 id="import-heading">写真を取り込む</h2>
         <div id="import-trip-required" hidden><p>追加先の旅行を選んでください</p><label class="sr-only" for="import-trip-choice">写真の追加先</label><select id="import-trip-choice"><option value="">旅行を選択</option></select><button id="import-trip-create" type="button">新しい旅行を作成</button></div>
         <div id="import-selection">
+          <div id="import-backup-capacity" class="backup-capacity hint"><p data-capacity-summary>バックアップ対象の保存件数を確認しています。</p><details><summary>ZIP上限と保存方法</summary><p data-capacity-detail></p></details></div>
           <label class="import-file-picker">写真を選択<input id="photo-files" class="sr-only" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" multiple /></label>
           <p id="import-selection-count" role="status" aria-live="polite">写真未選択</p>
           <p id="import-selection-name" hidden></p>
@@ -91,6 +92,7 @@
         <h2 id="archive-heading"><span class="manage-icon" data-manage-icon="download" aria-hidden="true"></span>バックアップ</h2>
         <p class="manage-intro">旅行記録とサムネイルをZIPに保存します。</p>
         <p class="manage-warning">元の高解像度写真は含まれません。</p>
+        <div id="backup-capacity" class="backup-capacity hint"><p data-capacity-summary>バックアップ対象の保存件数を確認しています。</p><details><summary>ZIP上限と保存方法</summary><p data-capacity-detail></p></details></div>
         <p id="archive-status" role="status" aria-live="polite"></p>
         <div class="manage-save-methods">
           <div class="manage-method"><div><strong>通常保存</strong><p class="hint">64 MiBまで</p></div><button id="export-button" type="button">ZIPを保存</button></div>
@@ -102,6 +104,7 @@
       <section id="restore-group" class="panel" aria-labelledby="restore-heading">
           <h2 id="restore-heading"><span class="manage-icon" data-manage-icon="upload" aria-hidden="true"></span>復元</h2>
           <p class="manage-intro">ZIPを検証し、既存データを上書きせずに追加します。</p>
+          <div id="restore-backup-capacity" class="backup-capacity hint"><p data-capacity-summary>バックアップ対象の保存件数を確認しています。</p><details><summary>ZIP上限と保存方法</summary><p data-capacity-detail></p></details></div>
           <label for="archive-file" class="sr-only">復元するZIPを選択</label><input id="archive-file" type="file" accept=".zip,application/zip" />
           <p id="archive-file-summary" class="hint" role="status" hidden>ZIPが選択されていません。</p>
           <button id="restore-button" type="button" disabled>検証して復元</button>

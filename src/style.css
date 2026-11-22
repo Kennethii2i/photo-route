@@ -671,3 +671,7 @@ body[data-photo-mode="preview"] #photo-detail .placeholder { padding: 1rem; }
 #map-photo-group { position: sticky; top: var(--list-header-height, 0px); z-index: 2; display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; padding: .35rem 0; background: #fff; font-size: .9rem; }
 #map-photo-group[hidden] { display: none; }
 body[data-map-photo-group="true"] #photos-panel :is(.photo-list-toolbar, #photo-filter, #photo-empty-clear) { display: none; }
+
+.backup-capacity { grid-column: 1 / -1; overflow-wrap: anywhere; }
+.backup-capacity > p { margin: .35rem 0; }
+.backup-capacity details { margin: .25rem 0; }

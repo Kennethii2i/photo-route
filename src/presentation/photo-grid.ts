@@ -18,6 +18,7 @@ export class PhotoGrid {
   private tripKey = '';
   private signature = '';
   private rows: Row[] = [];
+  private orderedPhotos: Photo[] = [];
   private offsets: number[] = [0];
   private columns = 2;
   private start = -1;
@@ -36,6 +37,31 @@ export class PhotoGrid {
     private readonly thumbnail: (id: string) => Promise<Thumbnail | undefined>,
     private readonly onSelect: (id: string) => void,
   ) {
+    list.tabIndex = -1;
+    if (!list.hasAttribute('aria-label')) list.setAttribute('aria-label', '写真一覧');
+    list.addEventListener('keydown', event => {
+      if (event.key !== 'Tab' || event.ctrlKey || event.altKey || event.metaKey) return;
+      const current = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-photo-id]');
+      if (!current) return;
+      const index = this.orderedPhotos.findIndex(photo => photo.id === current.dataset.photoId);
+      const next = this.orderedPhotos[index + (event.shiftKey ? -1 : 1)];
+      if (index < 0 || !next) return; // Let normal Tab leave at the real first/last photo.
+      event.preventDefault();
+      let button = this.photoButton(next.id);
+      if (!button) {
+        const row = this.rows.findIndex(item => item.kind === 'photos' && item.photos.some(photo => photo.id === next.id));
+        const listTop = this.list.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top + this.scroller.scrollTop;
+        this.scroller.scrollTop = Math.max(0, listTop + this.offsets[row]!);
+        this.renderWindow(); button = this.photoButton(next.id);
+      }
+      button?.focus({ preventScroll: true });
+      if (button) {
+        const rect = button.getBoundingClientRect(), viewport = this.scroller.getBoundingClientRect();
+        const top = this.visibleTop();
+        if (rect.top < top) this.scroller.scrollTop += rect.top - top;
+        else if (rect.bottom > viewport.bottom) this.scroller.scrollTop += rect.bottom - viewport.bottom;
+      }
+    });
     this.observer = new IntersectionObserver(entries => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
@@ -91,6 +117,7 @@ export class PhotoGrid {
       for (let index = 0; index < group.length; index += columns) this.rows.push({ kind: 'photos', photos: group.slice(index, index + columns), height: tile + 8 });
     }
     this.offsets = [0];
+    this.orderedPhotos = this.rows.flatMap(row => row.kind === 'photos' ? row.photos : []);
     for (const row of this.rows) this.offsets.push(this.offsets.at(-1)! + row.height);
     this.start = -1;
   }
@@ -115,18 +142,43 @@ export class PhotoGrid {
     this.list.replaceChildren();
   }
 
+  private photoButton(id: string): HTMLButtonElement | undefined {
+    return [...this.list.querySelectorAll<HTMLButtonElement>('button[data-photo-id]')].find(button => button.dataset.photoId === id);
+  }
+
+  private visibleTop(): number {
+    const viewport = this.scroller.getBoundingClientRect();
+    let top = viewport.top;
+    for (const header of this.scroller.querySelectorAll<HTMLElement>('.panel-top, .photo-list-toolbar, #map-photo-group')) {
+      const rect = header.getBoundingClientRect();
+      if (getComputedStyle(header).position === 'sticky' && rect.height > 0 && rect.top <= top + 1 && rect.bottom > top) top = rect.bottom;
+    }
+    return top;
+  }
+
+  private focusedPhoto(): string | undefined {
+    const active = document.activeElement;
+    return active instanceof HTMLButtonElement && this.list.contains(active) ? active.dataset.photoId : undefined;
+  }
+
+  private restoreFocus(id: string | undefined): void {
+    if (id) (this.photoButton(id) ?? this.list).focus({ preventScroll: true });
+  }
+
   private renderWindow(): void {
     if (!this.photos.length) {
       if (this.start === 0 && this.end === 0) return;
+      const focused = this.focusedPhoto();
       this.clearVisible();
       const item = document.createElement('li'); item.className = 'photo-grid-empty'; item.textContent = this.emptyMessage;
-      this.list.append(item); this.start = this.end = 0; return;
+      this.list.append(item); this.start = this.end = 0; this.restoreFocus(focused); return;
     }
     const listTop = this.list.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top + this.scroller.scrollTop;
     const top = Math.max(0, this.scroller.scrollTop - listTop - 240);
     const bottom = Math.max(0, this.scroller.scrollTop - listTop + this.scroller.clientHeight + 240);
     const start = this.lowerBound(top), end = Math.min(this.rows.length, this.lowerBound(bottom) + 1);
     if (start === this.start && end === this.end) return;
+    const focused = this.focusedPhoto();
     this.clearVisible(); this.start = start; this.end = end;
     const spacer = (height: number) => { const item = document.createElement('li'); item.className = 'photo-grid-spacer'; item.style.height = `${height}px`; item.setAttribute('aria-hidden', 'true'); return item; };
     this.list.append(spacer(this.offsets[start]!));
@@ -155,6 +207,7 @@ export class PhotoGrid {
       this.list.append(item);
     }
     this.list.append(spacer(this.offsets.at(-1)! - this.offsets[end]!));
+    this.restoreFocus(focused);
   }
 
   private loadPending(): void {
