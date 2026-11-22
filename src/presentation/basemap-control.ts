@@ -9,9 +9,6 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
   const panel = document.createElement('section'); panel.id = 'basemap-panel'; panel.hidden = true;
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-labelledby', 'basemap-heading');
   const heading = document.createElement('strong'); heading.id = 'basemap-heading'; heading.textContent = '地図の種類'; heading.className = 'sr-only';
-  const close = document.createElement('button'); close.type = 'button'; close.textContent = '×';
-  close.setAttribute('aria-label', 'レイヤーを閉じる'); close.title = 'レイヤーを閉じる';
-  const top = document.createElement('div'); top.className = 'basemap-heading'; top.append(heading, close);
   const choices = document.createElement('fieldset'); choices.className = 'basemap-choices';
   const legend = document.createElement('legend'); legend.className = 'sr-only'; legend.textContent = '背景地図'; choices.append(legend);
   for (const item of basemaps) {
@@ -32,7 +29,10 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
   const retry = document.createElement('button'); retry.type = 'button'; retry.textContent = '再試行'; retry.hidden = true;
   let selected: BasemapId = 'standard'; retry.addEventListener('click', () => choose(selected));
   const info = document.createElement('details'); info.className = 'basemap-info';
-  const infoHeading = document.createElement('summary'); infoHeading.textContent = '詳細・出典';
+  const infoHeading = document.createElement('summary'); infoHeading.title = '地図の詳細・出典';
+  const infoLabel = document.createElement('span'); infoLabel.className = 'sr-only'; infoLabel.textContent = '地図の詳細・出典';
+  const infoIcon = document.createElement('span'); infoIcon.className = 'basemap-info-icon'; infoIcon.textContent = 'i'; infoIcon.setAttribute('aria-hidden', 'true');
+  infoHeading.append(infoIcon, infoLabel);
   const selectedDescription = document.createElement('p'); selectedDescription.className = 'basemap-description'; selectedDescription.textContent = basemaps[0]!.description;
   const credits = document.createElement('div'); credits.className = 'basemap-credits';
   const creditHeading = document.createElement('strong'); creditHeading.textContent = '地図の出典';
@@ -44,8 +44,9 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
     mirror(); new MutationObserver(mirror).observe(attribution, { childList: true, subtree: true });
   }
   // The selector must be above the mobile photo preview, whose panel has its own stacking context.
-  info.append(infoHeading, selectedDescription, note, credits);
-  panel.append(top, choices, status, retry, info); dock.append(toggle); container.append(dock); document.body.append(panel);
+  const infoBody = document.createElement('div'); infoBody.className = 'basemap-info-body'; infoBody.append(selectedDescription, note, credits);
+  info.append(infoHeading, infoBody);
+  panel.append(heading, choices, status, retry, info); dock.append(toggle); container.append(dock); document.body.append(panel);
   let pinned = false, hoverSuppressed = false;
   let hideTimer: ReturnType<typeof setTimeout> | null = null;
   const cancelHide = () => { if (hideTimer !== null) { clearTimeout(hideTimer); hideTimer = null; } };
@@ -53,7 +54,7 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
     if (panel.hidden) return;
     const mobile = matchMedia('(max-width: 700px)').matches, anchor = toggle.getBoundingClientRect();
     const right = innerWidth - 12;
-    panel.style.left = mobile ? '10px' : `${Math.max(12, Math.min(anchor.left, right - 396))}px`;
+    panel.style.left = mobile ? '10px' : `${Math.max(12, Math.min(anchor.left, right - panel.getBoundingClientRect().width))}px`;
     panel.style.top = 'auto';
     panel.style.bottom = `${innerHeight - anchor.top + 6}px`;
     panel.style.maxWidth = mobile ? 'calc(100vw - 20px)' : 'calc(100vw - 24px)';
@@ -116,7 +117,6 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
     }, 220);
   });
   info.addEventListener('toggle', position);
-  close.addEventListener('click', () => dismiss());
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !panel.hidden && !document.querySelector('dialog[open]')) {
       event.preventDefault(); event.stopImmediatePropagation(); dismiss();

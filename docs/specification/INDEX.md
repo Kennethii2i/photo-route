@@ -79,3 +79,10 @@
 今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`
 
 今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`
+
+
+## レイヤーUIの最新変更
+
+[2026-11-23の縮小と×撤去](../smaller-layer-controls-2026-11-23.md)が現在の選択UI。基本4レイヤーと地域画像機能はそのまま。
+
+今回レイヤーUI変更前基準Git HEAD: `cc33039be2a707393a0c21a24bd2f5ead1d00aea`

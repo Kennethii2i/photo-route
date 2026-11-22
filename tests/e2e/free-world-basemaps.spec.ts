@@ -276,7 +276,7 @@ test('middle-width drawers, short mobile previews and album banners leave contro
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300); await expect(page.locator('#basemap-panel')).toBeHidden();
   await page.mouse.move(300, 60); await page.locator('#basemap-open').click();
-  await page.getByRole('button', { name: 'レイヤーを閉じる', exact: true }).click();
+  await page.locator('#basemap-open').click();
   await expect(page.locator('#basemap-panel')).toBeHidden(); await page.locator('#right-close').click();
   await page.locator('#mobile-tab-visits').click();
   await page.locator(`#visit-list button[data-visit-id="${ids.albums[0]}"]`).click();
@@ -320,7 +320,19 @@ test('mouse hover opens a compact chooser without focus, map changes or extra re
   expect(await page.evaluate(() => document.activeElement?.id)).toBe(focusBefore);
   expect(await camera(page)).toEqual(view); expect(traffic.length).toBe(requestsBefore);
   await expect(page.locator('.basemap-note')).toBeHidden();
-  const box = await page.locator('#basemap-panel').boundingBox(); expect(box!.height).toBeLessThan(180);
+  const box = await page.locator('#basemap-panel').boundingBox();
+  expect(box!.height).toBeLessThanOrEqual(82); expect(box!.width).toBeLessThanOrEqual(304);
+  const dock = await page.locator('#basemap-open').boundingBox();
+  expect(dock!.width).toBe(60); expect(dock!.height).toBe(60);
+  await expect(page.getByRole('button', { name: 'レイヤーを閉じる', exact: true })).toHaveCount(0);
+  const information = page.locator('.basemap-info > summary');
+  await expect(information).toHaveAccessibleName('地図の詳細・出典');
+  const infoBox = await information.boundingBox();
+  expect(infoBox!.width).toBeGreaterThanOrEqual(44); expect(infoBox!.height).toBeGreaterThanOrEqual(44);
+  await information.focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('.basemap-note')).toBeVisible();
+  await page.keyboard.press('Enter'); await expect(page.locator('.basemap-note')).toBeHidden();
+  await page.locator('#photo-search').focus();
   await page.getByRole('radio', { name: '標準', exact: true }).hover();
   await page.waitForTimeout(300); await expect(page.locator('#basemap-panel')).toBeVisible();
   await page.mouse.move(800, 100); await expect(page.locator('#basemap-panel')).toBeHidden();
@@ -331,7 +343,7 @@ test('mouse hover opens a compact chooser without focus, map changes or extra re
   await expect(page.locator('#basemap-panel')).toBeVisible();
   await page.locator('#basemap-open').click(); await page.mouse.move(800, 100);
   await page.waitForTimeout(300); await expect(page.locator('#basemap-panel')).toBeVisible();
-  await page.getByRole('button', { name: 'レイヤーを閉じる', exact: true }).click();
+  await page.locator('#basemap-open').click();
   await expect(page.locator('#basemap-panel')).toBeHidden();
 });
 
@@ -344,7 +356,7 @@ test('touch opens the same compact chooser without a hover prerequisite', async 
     await expect(page.locator('#basemap-panel')).toBeVisible();
     await page.getByRole('radio', { name: '標準', exact: true }).check();
     await expect(page.locator('#basemap-control')).toHaveAttribute('data-basemap', 'standard');
-    await page.getByRole('button', { name: 'レイヤーを閉じる', exact: true }).click();
+    await page.locator('#basemap-open').click();
     await expect(page.locator('#basemap-panel')).toBeHidden();
   } finally { await context.close(); }
 });
