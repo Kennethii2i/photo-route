@@ -10,6 +10,8 @@
 
 無料の世界背景4種類は[地図仕様](MAP_AND_GEO.md)と[計画・検証](../free-world-basemaps-2026-11-22.md)を参照してください。
 
+地図選択の簡素化・hoverと無料高精細画像の調査は[追加計画・検証](../compact-map-layers-2026-11-22.md)を参照してください。
+
 ## 読む順序
 
 初参加者はルートの[README](../../README.md)で環境を作り、[CONTRIBUTING](../../CONTRIBUTING.md)と[AGENTS](../../AGENTS.md)で共同開発ルールを確認します。仕様は PRODUCT → ARCHITECTURE → DEVELOPMENT → DATA_MODEL → STORAGE_AND_BACKUP の順に読み、変更対象の機能文書とTESTINGへ進んでください。

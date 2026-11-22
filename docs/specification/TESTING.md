@@ -111,3 +111,9 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 今回の背景地図変更前基準Git HEAD: `b3142ba0cefd217ca015f6e8c2236761d6ccfd7e`
 
 今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`
+
+## 2026-11-22 コンパクト選択の追加回帰
+
+[地図E2E](../../tests/e2e/free-world-basemaps.spec.ts)にmouse hoverでの無選択/無通信/焦点維持、隙間の移動、mouseleave、クリック固定、Escape後の再展開抑制、低画面で入口へ重なった場合、タッチを追加。旧カードの左端座標だけの試験は、実際の矩形非重複とradioの実ヒット判定へ更新する。模擬応答/合成写真だけを使い、代表onboardingを合わせる。[実行記録](../compact-map-layers-2026-11-22.md)。
+
+今回のコンパクト選択変更前基準Git HEAD: `444c94ca55798292a9e0abc6faf694bf7509d6b4`

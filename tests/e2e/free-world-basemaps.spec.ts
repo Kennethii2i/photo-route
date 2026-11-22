@@ -45,7 +45,7 @@ async function snapshot(page: Page) {
   });
 }
 
-test.use({ viewport: { width: 1440, height: 900 } });
+test.use({ viewport: { width: 1440, height: 900 }, actionTimeout: 7000 });
 
 test('four backgrounds retain camera, search, selected photo and all saved records', async ({ page }) => {
   const { traffic, unexpected } = await prepare(page);
@@ -184,11 +184,17 @@ test('middle-width drawers, short mobile previews and album banners leave contro
   for (const width of [900, 800]) {
     await page.setViewportSize({ width, height: 700 });
     if (await page.locator('#drawer-toggle').getAttribute('aria-expanded') === 'false') await page.locator('#drawer-toggle').click();
+    await page.locator('#basemap-open').hover();
+    await expect(page.locator('#basemap-panel')).toBeVisible();
+    await expect(page.locator('#drawer-toggle')).toHaveAttribute('aria-expanded', 'true');
     await page.locator('#basemap-open').click();
     await expect(page.locator('#drawer-toggle')).toHaveAttribute('aria-expanded', 'false');
     const panel = await page.locator('#basemap-panel').boundingBox(), right = await page.locator('#right-panel').boundingBox(), drawer = await page.locator('#drawer-toggle').boundingBox();
-    expect(panel!.x).toBeGreaterThanOrEqual(drawer!.x + drawer!.width);
+    expect(panel!.y >= drawer!.y + drawer!.height || panel!.y + panel!.height <= drawer!.y || panel!.x >= drawer!.x + drawer!.width).toBe(true);
     expect(panel!.x + panel!.width).toBeLessThanOrEqual(right!.x);
+    for (const input of await page.getByRole('radio').all()) {
+      expect(await input.evaluate(element => { const box = element.getBoundingClientRect(); return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === element; })).toBe(true);
+    }
     await expect(page.locator('#photo-search')).toHaveValue('海辺-1.jpg');
     await page.getByRole('radio', { name: '淡色', exact: true }).check(); await page.keyboard.press('Escape');
   }
@@ -204,9 +210,14 @@ test('middle-width drawers, short mobile previews and album banners leave contro
   expect(await selected.evaluate(input => {
     const box = input.getBoundingClientRect(); return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === input;
   })).toBe(true);
-  await page.locator('.basemap-credits > summary').click();
+  await page.locator('.basemap-info > summary').click();
   await expect(page.locator('.basemap-credits')).toContainText('OpenStreetMap');
   await page.screenshot({ path: 'test-results/free-basemaps/preview-panel-320x568.png' });
+  const dock = await page.locator('#basemap-open').boundingBox();
+  await page.mouse.move(dock!.x + dock!.width / 2, dock!.y + dock!.height / 2);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300); await expect(page.locator('#basemap-panel')).toBeHidden();
+  await page.mouse.move(300, 60); await page.locator('#basemap-open').click();
   await page.getByRole('button', { name: 'レイヤーを閉じる', exact: true }).click();
   await expect(page.locator('#basemap-panel')).toBeHidden(); await page.locator('#right-close').click();
   await page.locator('#mobile-tab-visits').click();
@@ -238,4 +249,44 @@ test('date-line fit and selection use the visible world copy without changing st
   expect(Math.abs(result.before.lng)).toBeCloseTo(180, 3);
   expect(result.after).toEqual(result.before);
   expect(result.stored.every(point => point && point.longitude > 120 && point.longitude < 140)).toBe(true);
+});
+
+
+test('mouse hover opens a compact chooser without focus, map changes or extra requests', async ({ page }) => {
+  const { traffic } = await prepare(page);
+  await page.keyboard.press('Escape'); await page.mouse.move(800, 100);
+  await page.locator('#photo-search').focus();
+  const focusBefore = await page.evaluate(() => document.activeElement?.id), view = await camera(page), requestsBefore = traffic.length;
+  await page.locator('#basemap-open').hover();
+  await expect(page.locator('#basemap-panel')).toBeVisible();
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe(focusBefore);
+  expect(await camera(page)).toEqual(view); expect(traffic.length).toBe(requestsBefore);
+  await expect(page.locator('.basemap-note')).toBeHidden();
+  const box = await page.locator('#basemap-panel').boundingBox(); expect(box!.height).toBeLessThan(180);
+  await page.getByRole('radio', { name: '標準', exact: true }).hover();
+  await page.waitForTimeout(300); await expect(page.locator('#basemap-panel')).toBeVisible();
+  await page.mouse.move(800, 100); await expect(page.locator('#basemap-panel')).toBeHidden();
+  await page.locator('#basemap-open').hover(); await expect(page.locator('#basemap-panel')).toBeVisible();
+  await page.keyboard.press('Escape'); await expect(page.locator('#basemap-panel')).toBeHidden();
+  await page.waitForTimeout(300); await expect(page.locator('#basemap-panel')).toBeHidden();
+  await page.mouse.move(800, 100); await page.locator('#basemap-open').hover();
+  await expect(page.locator('#basemap-panel')).toBeVisible();
+  await page.locator('#basemap-open').click(); await page.mouse.move(800, 100);
+  await page.waitForTimeout(300); await expect(page.locator('#basemap-panel')).toBeVisible();
+  await page.getByRole('button', { name: 'レイヤーを閉じる', exact: true }).click();
+  await expect(page.locator('#basemap-panel')).toBeHidden();
+});
+
+test('touch opens the same compact chooser without a hover prerequisite', async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  try {
+    await prepare(page); await page.keyboard.press('Escape');
+    await page.locator('#basemap-open').click();
+    await expect(page.locator('#basemap-panel')).toBeVisible();
+    await page.getByRole('radio', { name: '標準', exact: true }).check();
+    await expect(page.locator('#basemap-control')).toHaveAttribute('data-basemap', 'standard');
+    await page.getByRole('button', { name: 'レイヤーを閉じる', exact: true }).click();
+    await expect(page.locator('#basemap-panel')).toBeHidden();
+  } finally { await context.close(); }
 });
