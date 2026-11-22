@@ -88,3 +88,9 @@
 今回レイヤーUI変更前基準Git HEAD: `cc33039be2a707393a0c21a24bd2f5ead1d00aea`
 
 今回レイヤーUI実装・検証の確認元Git HEAD: `3e2882c6896fb251e199e23ce98f529ce6554d92`
+
+## 地図レイヤーのmain統合確認
+
+[2026-11-23の承認範囲・バックアップ・統合検証](../map-layers-main-integration-2026-11-23.md)。現UI採用と無料4背景/地域画像のローカルmain統合が対象で、Push/公開は含まない。
+
+統合対象の確認元Git HEAD: `ea94e9ba0b153e7472712cd3af3be5fa42523791`
