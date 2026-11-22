@@ -117,3 +117,5 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 [地図E2E](../../tests/e2e/free-world-basemaps.spec.ts)にmouse hoverでの無選択/無通信/焦点維持、隙間の移動、mouseleave、クリック固定、Escape後の再展開抑制、低画面で入口へ重なった場合、タッチを追加。旧カードの左端座標だけの試験は、実際の矩形非重複とradioの実ヒット判定へ更新する。模擬応答/合成写真だけを使い、代表onboardingを合わせる。[実行記録](../compact-map-layers-2026-11-22.md)。
 
 今回のコンパクト選択変更前基準Git HEAD: `444c94ca55798292a9e0abc6faf694bf7509d6b4`
+
+今回のコンパクト選択の実装・検証の確認元Git HEAD: `c01a34d9e5f3af931305431c5340c2b7b23d79b2`
