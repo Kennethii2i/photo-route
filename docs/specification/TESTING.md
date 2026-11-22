@@ -128,3 +128,5 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 [Vite保護の単体](../../tests/unit/public-env-policy.test.ts)は通常の`npm test`に含む。公開用変数の拒否、無関係な設定/非公開変数の許可、一時ディレクトリの`.env.local`と変数展開、エラーの非表示を合成値で確認する。実際のEsri接続・課金・実キー検査は対象外。
 
 今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
+
+今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`

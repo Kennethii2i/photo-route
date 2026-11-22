@@ -35,3 +35,5 @@ npm test -- tests/unit/public-env-policy.test.ts
 [公式のセキュリティ推奨](https://developers.arcgis.com/documentation/security-and-authentication/security-best-practices/)、[キー管理](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/api-key-credentials/location-platform/)、[課金](https://location.arcgis.com/help/billing/)。外部条件は利用開始時にも確認する。
 
 今回変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
+
+今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`

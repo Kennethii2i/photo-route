@@ -90,3 +90,5 @@ DB v3/ZIP v2と`photoAlbumLinks`正本性は現行契約です。旧`Photo.visit
 公開検査の検出回帰は`python -m unittest discover -s tools -p test_public_safety.py`で実行し、CIも公開安全性検査の前に実行する。実キーを検査へ投入しない。Esri接続は未実装。[ローカル中継計画](../esri-key-security-2026-11-22.md)の承認後に別途実装する。
 
 今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
+
+今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`

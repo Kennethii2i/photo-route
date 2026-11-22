@@ -59,3 +59,5 @@ main履歴にはローカルパス/過去の実利用バックアップに言及
 Esri利用の所有者承諾に伴い、[資格情報規則](EXTERNAL_API_CREDENTIALS.md)を追加。公開検査にEsriキー候補を追加し、Viteの公開用環境変数に資格情報を設定した場合は起動・ビルド・previewを拒否する。キーの実値をエラーへ含めない。Esri接続、キー保存、PC内中継は未実装で、新しい通信は発生しない。[接続計画](../esri-key-security-2026-11-22.md)は構成承認前。写真/Exif・DB/ZIPの経路は変更しない。
 
 今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
+
+今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`

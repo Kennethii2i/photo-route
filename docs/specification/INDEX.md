@@ -68,3 +68,5 @@
 [保護規則](EXTERNAL_API_CREDENTIALS.md)と[Esri導入準備・接続計画](../esri-key-security-2026-11-22.md)を参照。混入防止は実装済み、Esri接続とPC内中継は未実装。
 
 今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
+
+今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`
