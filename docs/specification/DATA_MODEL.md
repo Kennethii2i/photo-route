@@ -152,3 +152,5 @@ IndexedDB自体にリレーショナルDBの外部キー制約はありません
 [限定自動取り込み](IMPORT_AND_PHOTOS.md)も既存Photo/Thumbnailを使用し、DB v3/ZIP v2・所属・補正・原本非保存の意味を変えません。`contentSha256`と`sourceByteLength`は選んだ原本、sourceGps/sourceTime/sourceOrientationは原本Exifに由来します。表示用の縮小JPEGを別Photoとして登録しません。新経路の失敗ではPhoto/Thumbnailを保存せず、Jobの書き込みはあり得ます。timeout等は既存のJob.state=interruptedを使い、新フィールド/移行はありません。
 
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
+
+今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`

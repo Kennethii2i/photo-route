@@ -74,3 +74,5 @@ Applicationが長辺で拒否された60MP以下のJPEGを識別し、[automatic
 原本バッファをWorkerへ転送する前にSHA/バイト数を確定します。新経路は既存復号予算を全量予約して通常復号とも排他にし、Workerは結果送信前にFrame/Decoderをcloseします。timeout/通信異常/稼働中の中断ではterminateし、ページ内の処理停止フラグで次の取り込みを拒否します。このフラグは永続データではありません。native内部の解放完了を保証する仕組みではないことを[検証記録](../automatic-large-jpeg-2026-11-22.md)へ残します。
 
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
+
+今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
