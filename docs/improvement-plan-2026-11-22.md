@@ -47,4 +47,20 @@
 
 再起動時のジョブ自動訂正、永続ドラフト、一般Undo UIは追加なし。既存ごみ箱/ZIP復元の保存確定後に表示再取得だけが失敗する場合の案内は今回未修正。実写真・実DB・実ZIP/通常Chrome/実地図通信の検証、大容量ZIP全回帰、全歴史的E2Eは未実施。Push・統合・公開・実DB移行は行わない。
 
-作業ブランチ: `codex/safety-ux-improvements`。基準HEADは冒頭に記録。Developerはコミット未作成の差分をMainへ引き渡す。最終コミットはMainが実施し、Push/統合は行わない。
+作業ブランチ: `codex/safety-ux-improvements`。Mainは実装・テスト・関連文書19ファイルを`a493c20509dea1654434bf05ac8e8986da846fce`としてローカルコミットした。実装工程でPush・統合は行っていない。
+
+## 2026-11-22 統合前の文書確認
+
+所有者の「統合工程に入りたい。仕様書等への変更内容の記入を確認」という指示に基づき、実装コミット`a493c20`の差分を照合した。Mainが編集を担当し、独立Reviewerは読み取りで記載漏れと記録時点を確認した。製品コード・保存形式・通信先の追加変更はない。
+
+| 確認対象 | 結果 |
+|---|---|
+| 6改善の詳細仕様・CHANGELOG | UI_UX / STORAGE_AND_BACKUP / IMPORT_AND_PHOTOS / ERRORS_AND_RECOVERY / TESTING / KNOWN_LIMITATIONS / CHANGELOGに記載済み |
+| 機能一覧・入口・新モジュール | FEATURESへ操作と制約の要約、INDEXへ改善記録とHEAD区分、ARCHITECTUREへbackup-capacityと編集状態の責務を補記 |
+| 検証の時点 | TESTINGの旧実行区分を初版時点の記録と明記。本書の79単体/32対象E2Eは実装時の実行結果として保持し、文書確認で再実行したとは扱わない |
+| ローカルGit | 照合開始時点でmainは`26093c1`、改善ブランチは`a493c20`、両worktreeはクリーン。`git merge-base --is-ancestor main HEAD`が成功し、ローカルmainは改善ブランチの祖先 |
+| 統合工程の未実施事項 | リモートの最新状態照合、Push、PR、GitHub Actionsの今回差分への実行、main統合は未実施。ローカル試験成功とGitHub CI成功を混同しない |
+
+所有者指示により、既存の復元後表示失敗案内、上限超過時のバックアップ手段、実機/他ブラウザ確認、初期読み込み軽量化は今回の統合対象へ追加しない。既知の制約・未確認事項は上記および正式仕様へ残す。
+
+今回の追補は文書5ファイルのみ。`python -X utf8 tools/check_specification.py`は21文書・303相対リンク・116ソース参照で成功、`python -X utf8 tools/check_public_safety.py`は421公開対象・23承認画像・秘密形式検出0で成功。`npm run typecheck`、`npm run build`、`git diff --check`も成功した。ビルドの既存の大きなchunk警告は継続。独立Reviewerは追補に追加の必須修正なしと確認した。製品コード・テスト・依存ファイルが実装コミットから変わっていないことを確認し、実装時の単体/E2Eは文書追補で再実行していない。今回の追補は同じ改善ブランチの別ローカルコミットへ記録する。

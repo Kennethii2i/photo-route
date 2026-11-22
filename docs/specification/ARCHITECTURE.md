@@ -39,6 +39,7 @@ flowchart TD
 | Presentation | [map.ts](../../src/presentation/map.ts)、[map-viewport.ts](../../src/presentation/map-viewport.ts)、[map-spider-layout.ts](../../src/presentation/map-spider-layout.ts) | 地図ソース、選択、カメラ、一時的な画面座標配置 |
 | Presentation | [visit-photo-editor.ts](../../src/presentation/visit-photo-editor.ts)、[photo-album-editor.ts](../../src/presentation/photo-album-editor.ts) | 両方向の複数所属編集。各draftモジュールは未保存選択を保持 |
 | Presentation | [photo-correction-draft.ts](../../src/presentation/photo-correction-draft.ts)、[error-notice.ts](../../src/presentation/error-notice.ts) | 写真別の補正ドラフト、障害の優先表示 |
+| Presentation | [backup-capacity.ts](../../src/presentation/backup-capacity.ts) | 保存件数と既存ZIP上限の表示文言。`LibraryDb.backupCounts()`の読取結果を使い、保存可否を新たに制御しない |
 
 ## 起動とデータ経路
 
@@ -54,8 +55,10 @@ flowchart TD
 
 UI状態は主にメモリー上であり、再読み込み後のドラフト/選択/検索の永続復帰は保証しません。非同期サムネイルや候補には世代/選択IDの確認があり、Object URLは表示終了時に解放します。
 
+2026-11-22の改善では、`app.ts`がアルバム名・GPS/日時補正の編集開始時の期待値を保持し、保存APIが同一トランザクション内で比較します。補正ドラフトは保存確定した送信項目だけ同期します。競合照会の古い応答は対象ID・編集世代・DOM接続状態で除外します。バックアップ件数照会は取り込み開始を待たせず、失敗しても件数を0と断定しません。DB/ZIPのレコード・バージョンやDomainの意味は変えません。詳細は[UI/UX](UI_UX.md)と[保存仕様](STORAGE_AND_BACKUP.md)を参照します。
+
 ## 依存ライブラリ
 
 [package.json](../../package.json)の本番依存は`maplibre-gl 6.18.0`、`exifreader 4.54.0`、`fflate 0.8.3`、`zod 4.6.7`です。現行ZIP処理の正本は独自の`zip-stream.ts`で、依存宣言だけから利用経路を推測しません。`exifr`、`heic-to/csp`、`@su-engineering/heic`等は開発/spikeとVite optimizeDepsにも現れますが、現行のHEICサムネイル対応を意味しません。[ライセンス検査](PUBLICATION_REVIEW.md)を参照してください。
 
-仕様の確認元Git HEAD: `989eae47f3ae96fa557b97eb5d7cb63e47e77f9e`
+今回追加した責務・状態管理の確認元実装Git HEAD: `a493c20509dea1654434bf05ac8e8986da846fce`
