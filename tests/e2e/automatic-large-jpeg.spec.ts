@@ -128,12 +128,20 @@ test('a native timeout interrupts the run, discards prepared files and blocks re
     try {
       const trip = newTrip('Synthetic timeout'); await db.createTrip(trip);
       const large = await orientedJpeg(await largeJpegBase(), 1), small = new File([await (await fetch('/fixtures/generated/png_no_metadata.png')).blob()], 'small.png');
+      // Source reads can finish out of order. Make this case specifically test
+      // a normal decode waiting behind an already-started automatic worker.
+      const NativeWorker = window.Worker;
+      let markAutomaticStarted!: () => void;
+      const automaticStarted = new Promise<void>(resolve => { markAutomaticStarted = resolve; });
+      window.Worker = class extends NativeWorker { constructor(url: string | URL, options?: WorkerOptions) { super(url, options); if (String(url).includes('automatic-jpeg.worker')) markAutomaticStarted(); } };
+      const readSmall = small.arrayBuffer.bind(small);
+      small.arrayBuffer = async () => { await automaticStarted; return readSmall(); };
       const native = window.createImageBitmap; let normalDecodes = 0;
       window.createImageBitmap = async () => { normalDecodes++; throw new Error('Normal decode must not start after timeout'); };
       const errors = [];
       try { await new PhotoImporter(db).importFiles([large, small], trip.id); } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
       try { await new PhotoImporter(db).importFiles([small], trip.id); } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
-      window.createImageBitmap = native;
+      window.createImageBitmap = native; window.Worker = NativeWorker;
       const snapshot = await db.snapshot(), jobs = await db.listJobs();
       return { errors, normalDecodes, photos: snapshot.photos.length, thumbs: snapshot.thumbnails.length, jobs: jobs.map(job => ({ state: job.state, processed: job.processed })) };
     } finally { db.close(); }
