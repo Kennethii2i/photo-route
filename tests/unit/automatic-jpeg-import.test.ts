@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PhotoImporter, type ImportProgress } from '../../src/application/import-photos';
 import { newTrip, type Photo } from '../../src/domain/model';
 import type { LibraryDb } from '../../src/infrastructure/storage';
-import { inspectImage, makeThumbnail, sha256 } from '../../src/infrastructure/image';
+import { inspectImage, makeThumbnail, parseMetadata, sha256 } from '../../src/infrastructure/image';
 import { AutomaticJpegError, makeAutomaticJpeg } from '../../src/infrastructure/automatic-jpeg';
 
 vi.mock('../../src/infrastructure/automatic-jpeg', async original => ({ ...await original<typeof import('../../src/infrastructure/automatic-jpeg')>(), makeAutomaticJpeg: vi.fn() }));
-vi.mock('../../src/infrastructure/image', async original => ({ ...await original<typeof import('../../src/infrastructure/image')>(), makeThumbnail: vi.fn() }));
+vi.mock('../../src/infrastructure/image', async original => ({ ...await original<typeof import('../../src/infrastructure/image')>(), parseMetadata: vi.fn(), makeThumbnail: vi.fn() }));
 const actual = await vi.importActual<typeof import('../../src/infrastructure/image')>('../../src/infrastructure/image');
 const fixture = new Uint8Array(readFileSync('fixtures/generated/jpeg_gps_offset_orientation6.jpg'));
 const metadata = await actual.parseMetadata(fixture);
@@ -32,6 +32,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(makeAutomaticJpeg).mockImplementation(async (_bytes, id) => ({ ok: true, metadata, thumbnail: thumbnail(id) }));
   vi.mocked(makeThumbnail).mockImplementation(async (_bytes, _mime, id) => thumbnail(id));
+  vi.mocked(parseMetadata).mockImplementation(actual.parseMetadata);
 });
 
 describe('automatic import integration', () => {
@@ -75,8 +76,17 @@ describe('automatic import integration', () => {
   });
   it('marks fatal image processing interrupted and never commits prepared subsequent files', async () => {
     const context = setup();
-    vi.mocked(makeAutomaticJpeg).mockRejectedValue(new AutomaticJpegError('timeout', true));
-    await expect(context.importer.importFiles([file(16000, 3000), file(16, 12), file(17, 12)], context.trip.id)).rejects.toThrow('再読み込み');
+    let rejectAutomatic!: (error: Error) => void;
+    let markAutomaticStarted!: () => void;
+    const automaticStarted = new Promise<void>(resolve => { markAutomaticStarted = resolve; });
+    vi.mocked(makeAutomaticJpeg).mockImplementation(() => new Promise((_resolve, reject) => { rejectAutomatic = reject; markAutomaticStarted(); }));
+    vi.mocked(parseMetadata).mockImplementation(async () => { await automaticStarted; return metadata; });
+    const pending = expect(context.importer.importFiles([file(16000, 3000), file(16, 12), file(17, 12)], context.trip.id)).rejects.toThrow('再読み込み');
+    await vi.waitFor(() => { expect(makeAutomaticJpeg).toHaveBeenCalledOnce(); expect(parseMetadata).toHaveBeenCalledOnce(); });
+    // Let the normal input finish metadata and wait for the occupied budget.
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(makeThumbnail).not.toHaveBeenCalled();
+    rejectAutomatic(new AutomaticJpegError('timeout', true)); await pending;
     expect(context.photos).toHaveLength(0); expect(makeThumbnail).not.toHaveBeenCalled(); expect(context.jobs.at(-1)).toMatchObject({ state: 'interrupted', processed: 0 });
     expect(context.jobs.some(job => job.state === 'completed')).toBe(false);
   });
