@@ -13,7 +13,7 @@ async function prepare(page: Page) {
   await page.route('https://**/*', route => {
     const url = new URL(route.request().url()); traffic.push(url.href);
     if (url.hostname === 'tiles.openfreemap.org' && url.pathname.startsWith('/styles/')) return route.fulfill({ json: fixtureStyle });
-    if (url.hostname === 'tiles.maps.eox.at' || url.hostname === 'tiles.mapterhorn.com') return route.fulfill({ contentType: 'image/png', body: pixel });
+    if (['tiles.maps.eox.at', 'tiles.mapterhorn.com', 'cyberjapandata.gsi.go.jp', 'basemap.nationalmap.gov'].includes(url.hostname)) return route.fulfill({ contentType: 'image/png', body: pixel });
     unexpected.push(url.href); return route.abort();
   });
   await page.evaluate(async () => {
@@ -49,7 +49,7 @@ test.use({ viewport: { width: 1440, height: 900 }, actionTimeout: 7000 });
 
 test('four backgrounds retain camera, search, selected photo and all saved records', async ({ page }) => {
   const { traffic, unexpected } = await prepare(page);
-  expect(traffic.some(url => /eox|mapterhorn/.test(url))).toBe(false);
+  expect(traffic.some(url => /eox|mapterhorn|gsi.go.jp|nationalmap.gov/.test(url))).toBe(false);
   await page.keyboard.press('Escape'); await page.locator('#photo-search').fill('海辺');
   await page.locator('#photo-list [data-photo-id]').first().click();
   await expect(page.locator('#right-panel')).toBeVisible();
@@ -90,6 +90,64 @@ test('background switching retains album focus and a blank click closes only the
   await expect(page.locator('#visit-focus-banner')).toBeVisible();
   await expect(page.locator('#right-panel')).toBeHidden();
   await expect(page.locator('body')).toHaveAttribute('data-left-open', leftOpen!);
+});
+
+test('regional imagery requests follow area and native zoom without credentials', async ({ page }) => {
+  const { traffic, unexpected } = await prepare(page);
+  const before = await snapshot(page);
+  const jump = async (center: [number, number], zoom: number) => {
+    // areTilesLoaded() can still describe the previous frame immediately after
+    // jumpTo. Wait for the new view's idle event before counting its requests.
+    await page.evaluate(({ center, zoom }) => new Promise<void>(resolve => {
+      const map = (window as unknown as { testMap: { jumpTo(options: object): void; once(event: string, callback: () => void): void } }).testMap;
+      map.once('idle', () => resolve()); map.jumpTo({ center, zoom });
+    }), { center, zoom });
+  };
+  await jump([139.75, 35.68], 12);
+  await page.getByRole('radio', { name: '航空・衛星写真', exact: true }).check();
+  await expect(page.locator('#basemap-control')).toHaveAttribute('data-state', 'ready');
+  await jump([139.75, 35.68], 12);
+  const regional = () => traffic.filter(url => /gsi.go.jp|nationalmap.gov/.test(url));
+  expect(regional()).toEqual([]);
+  await jump([139.75, 35.68], 19);
+  await expect.poll(() => traffic.filter(url => url.includes('cyberjapandata.gsi.go.jp')).length).toBeGreaterThan(0);
+  const japanCount = regional().length;
+  expect(regional().every(url => /seamlessphoto\/18\//.test(url))).toBe(true);
+  await expect(page.locator('.maplibregl-ctrl-attrib')).toContainText('Axelspace');
+  await jump([2.35, 48.86], 18);
+  expect(regional()).toHaveLength(japanCount);
+  await jump([-77.04, 38.90], 19);
+  await expect.poll(() => traffic.filter(url => url.includes('basemap.nationalmap.gov')).length).toBeGreaterThan(0);
+  const american = regional().filter(url => url.includes('nationalmap.gov'));
+  expect(american.every(url => /MapServer\/tile\/16\//.test(url))).toBe(true);
+  await expect(page.locator('.maplibregl-ctrl-attrib')).toContainText('USDA');
+  const count = regional().length;
+  await jump([-150, 64], 18); // Alaska is intentionally outside this release.
+  expect(regional()).toHaveLength(count);
+  expect(regional().every(url => new URL(url).search === '')).toBe(true);
+  expect(unexpected).toEqual([]); expect(await snapshot(page)).toEqual(before);
+});
+
+test('regional 404 leaves global imagery usable and offers retry without a data change', async ({ page }) => {
+  const { traffic } = await prepare(page);
+  const before = await snapshot(page);
+  let missingRequests = 0;
+  await page.route('https://cyberjapandata.gsi.go.jp/**', route => { missingRequests++; return route.fulfill({ status: 404, body: 'Synthetic missing region' }); });
+  await page.getByRole('radio', { name: '航空・衛星写真', exact: true }).check();
+  await expect(page.locator('#basemap-control')).toHaveAttribute('data-state', 'ready');
+  await page.evaluate(() => (window as unknown as { testMap: { jumpTo(options: object): void } }).testMap.jumpTo({ center: [139.75, 35.68], zoom: 18 }));
+  const view = await camera(page);
+  await expect.poll(() => missingRequests).toBeGreaterThan(0);
+  await expect(page.locator('#basemap-load-status')).toContainText('一部の航空写真');
+  await expect(page.locator('#app-error')).toBeHidden();
+  await expect(page.locator('#basemap-panel').getByRole('button', { name: '再試行', exact: true })).toBeVisible();
+  expect(traffic.some(url => url.includes('tiles.maps.eox.at'))).toBe(true);
+  expect(await camera(page)).toEqual(view);
+  await page.route('https://cyberjapandata.gsi.go.jp/**', route => route.fulfill({ contentType: 'image/png', body: pixel }));
+  await page.locator('#basemap-panel').getByRole('button', { name: '再試行', exact: true }).click();
+  await expect(page.locator('#basemap-control')).toHaveAttribute('data-state', 'ready');
+  await expect(page.locator('#basemap-load-status')).toBeEmpty();
+  expect(await snapshot(page)).toEqual(before);
 });
 
 test('a stale response cannot replace a newer choice; failed style retries the requested background', async ({ page }) => {

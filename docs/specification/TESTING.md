@@ -130,3 +130,10 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
 
 今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`
+
+
+## 2026-11-22 地域画像の検証
+
+[basemap単体](../../tests/unit/basemap.test.ts)でbounds・min/maxzoom・供給URL・出典・レイヤー順・他背景からの除外を確認。[地図E2E](../../tests/e2e/free-world-basemaps.spec.ts)に対象地域/縮尺でのみ要求すること、native上限以上を要求しないこと、認証なし、対象外の無要求、地域404でもEOXを残して再試行、DB/カメラ不変を追加。外部は模擬応答。実配信/画質の少数確認は[実行記録](../regional-imagery-2026-11-22.md)で区別する。
+
+今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`

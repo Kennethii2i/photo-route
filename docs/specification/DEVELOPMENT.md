@@ -92,3 +92,10 @@ DB v3/ZIP v2と`photoAlbumLinks`正本性は現行契約です。旧`Photo.visit
 今回キー保護変更前基準Git HEAD: `5cc666be292b6135b0bf901599279f4ea6db80ae`
 
 今回キー保護実装・検証の確認元Git HEAD: `1d9becaa88a24b5050cd012d5a21f99eadb984c0`
+
+
+## 2026-11-22 地域限定への計画変更
+
+Esriアカウント/キー/PC内中継の接続計画は所有者依頼で取り下げ。[地域限定計画](../regional-imagery-2026-11-22.md)が現在の範囲。新しいキー設定・契約は不要。既存の一般的な資格情報保護規則と検査は維持。
+
+今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`

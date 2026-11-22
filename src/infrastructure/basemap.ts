@@ -16,9 +16,11 @@ export const openFreeMapTrial: BasemapConfig = {
 };
 
 export type BasemapId = 'standard' | 'satellite' | 'terrain' | 'muted';
+export const regionalImagerySourceIds: readonly string[] = ['japan-imagery', 'us-imagery'];
+export const regionalImageryWarning = '一部の航空写真を取得できません。表示できる画像で続行しています。';
 export const basemaps: { id: BasemapId; label: string; description: string }[] = [
   { id: 'standard', label: '標準', description: '地名・駅・施設を表示。掲載内容は地域と縮尺によります。' },
-  { id: 'satellite', label: '航空・衛星写真', description: '世界の衛星写真（EOX・2016年、約10m級）。古い画像で、建物の細部は分かりません。' },
+  { id: 'satellite', label: '航空・衛星写真', description: '拡大時は日本の地理院写真・米国本土のUSGS航空写真を表示。対象外は世界衛星写真（EOX・2016年、約10m級）。撮影時期・精細さは地域で異なり、提供範囲内でも海面などが空白になる場合があります。' },
   { id: 'terrain', label: '地形', description: '標高データの陰影で山や谷を表示。精度は地域によって異なります。' },
   { id: 'muted', label: '淡色', description: '写真の分布が見やすい、控えめな地図です。' },
 ];
@@ -36,8 +38,20 @@ export function composeBasemap(id: BasemapId, input: StyleSpecification): StyleS
       tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg'],
       attribution: '<a href="https://cloudless.eox.at">EOxCloudless</a> by <a href="https://eox.at">EOX IT Services GmbH</a> (Contains modified Copernicus Sentinel data 2016) · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>',
     };
+    style.sources['japan-imagery'] = {
+      type: 'raster', tileSize: 256, minzoom: 14, maxzoom: 18, bounds: [122, 20, 154, 46],
+      tiles: ['https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'],
+      attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto">地理院タイル（全国最新写真）</a> · GRUS画像（© Axelspace）',
+    };
+    style.sources['us-imagery'] = {
+      type: 'raster', tileSize: 256, minzoom: 14, maxzoom: 16, bounds: [-125, 24, -66, 50],
+      // The service advertises more LODs, but actual cached imagery ends at zoom 16.
+      tiles: ['https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}'],
+      attribution: '<a href="https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer">USDA, USGS The National Map: Orthoimagery</a>',
+    };
     // Keep vector names/POIs above imagery. Retain their source attribution too.
     style.layers = [{ id: 'world-imagery', type: 'raster', source: 'world-imagery', paint: { 'raster-fade-duration': 0 } },
+      ...regionalImagerySourceIds.map(source => ({ id: source, type: 'raster' as const, source, minzoom: 14, paint: { 'raster-fade-duration': 0 } })),
       ...style.layers.filter(layer => layer.type === 'symbol')];
   } else if (id === 'terrain') {
     style.sources['world-elevation'] = {

@@ -1,4 +1,4 @@
-import { basemaps, type BasemapId } from '../infrastructure/basemap';
+import { basemaps, regionalImageryWarning, type BasemapId } from '../infrastructure/basemap';
 import type { BasemapState } from './map';
 
 export function createBasemapControl(container: HTMLElement, choose: (id: BasemapId) => void, beforeOpen: () => void = () => {}) {
@@ -19,7 +19,7 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
     const input = document.createElement('input'); input.type = 'radio'; input.name = 'basemap'; input.value = item.id;
     input.setAttribute('aria-label', item.label); input.checked = item.id === 'standard';
     const preview = document.createElement('span'); preview.className = `basemap-preview basemap-${item.id}`; preview.setAttribute('aria-hidden', 'true');
-    const name = document.createElement('span'); name.className = 'basemap-name'; name.textContent = item.id === 'satellite' ? '衛星写真' : item.label;
+    const name = document.createElement('span'); name.className = 'basemap-name'; name.textContent = item.id === 'satellite' ? '航空・衛星' : item.label;
     const description = document.createElement('span'); description.textContent = item.description;
     description.className = 'sr-only'; label.title = item.description;
     description.id = `basemap-description-${item.id}`; input.setAttribute('aria-describedby', description.id);
@@ -27,7 +27,7 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
     label.append(input, preview, name, description); choices.append(label);
   }
   const note = document.createElement('p'); note.className = 'basemap-note';
-  note.textContent = 'すべて無料・APIキー不要。標準・淡色はOpenFreeMap、衛星写真はEOX、地形はMapterhornへ通信します。選んだ地図の閲覧地域やIPアドレス等が配信元へ伝わり得ます。写真・Exifは送信しません。';
+  note.textContent = 'すべて無料・APIキー不要。標準・淡色はOpenFreeMap、航空・衛星写真はEOXと対象地域の国土地理院・USGS、地形はMapterhornへ通信します。閲覧地域やIPアドレス等が配信元へ伝わり得ます。写真・Exifは送信しません。';
   const status = document.createElement('p'); status.id = 'basemap-load-status'; status.setAttribute('role', 'status');
   const retry = document.createElement('button'); retry.type = 'button'; retry.textContent = '再試行'; retry.hidden = true;
   let selected: BasemapId = 'standard'; retry.addEventListener('click', () => choose(selected));
@@ -133,7 +133,7 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
     update: (state: BasemapState) => {
       selected = state.id; dock.dataset.basemap = selected; dock.dataset.state = state.state;
       for (const input of choices.querySelectorAll<HTMLInputElement>('input')) input.checked = input.value === selected;
-      status.textContent = state.message; retry.hidden = state.state !== 'error';
+      status.textContent = state.message; retry.hidden = state.state !== 'error' && state.message !== regionalImageryWarning;
       selectedDescription.textContent = basemaps.find(item => item.id === selected)!.description;
       togglePreview.className = `basemap-preview basemap-${selected}`;
       toggle.title = `レイヤー：${basemaps.find(item => item.id === selected)!.label}`;

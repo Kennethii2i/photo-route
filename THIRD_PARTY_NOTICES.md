@@ -46,3 +46,13 @@ Photo Route本体のコードは[MIT](LICENSE)です。この許諾は、権利�
 - Mapterhornは[公開配信](https://mapterhorn.com/data-access/)を実行時に取得し、地図上の[出典一覧](https://mapterhorn.com/attribution/)を保持する。提供元コードのBSD-3と、各元標高資料の利用条件は別。元データ/タイルは同梱しない。
 
 本体MITを外部地図へ適用しない。今回追加するnpm依存はない。[配信条件と検証記録](docs/free-world-basemaps-2026-11-22.md)。
+
+
+## 日本・米国本土の地域航空写真（2026-11-22）
+
+- 地理院seamlessphoto z14–18：[タイル一覧](https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto)、[コンテンツ規約](https://www.gsi.go.jp/kikakuchousei/kikakuchousei40182.html)。現行はPDL1.0と個別の第三者条件。地図上は地理院タイルから一覧へのリンクと、該当範囲用の「GRUS画像（© Axelspace）」を日本sourceの帰属へ常時表示する。写真を加工/同梱せず、閲覧用タイルを公開endpointから読む。
+- USGSImageryOnly：[現行サービス](https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer)、[公式サービス案内](https://www.usgs.gov/faqs/what-are-urls-imagery-services-national-map-and-are-they-cached-or-dynamic)。米国本土の要求矩形に限定、z14–16。主に公共領域のNAIP等、地域により画像が異なる。アラスカのSPOT等を今回の対象へ含めず、サービス全域を一律CC0と称さない。地図上は「USDA, USGS The National Map: Orthoimagery」とサービスへのリンクを維持。
+
+原画像・タイルをリポジトリへ同梱しない。アカウント・キー不要で通常の閲覧要求を行い、大量取得/原ラスタexport/独自永続キャッシュは追加しない。提供者の利用条件は本体MITへ置き換えず、SLAや将来の無料継続を保証しない。
+
+今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`

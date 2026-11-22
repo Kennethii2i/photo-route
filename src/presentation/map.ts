@@ -3,7 +3,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { photoPoints, visitPoints, type PointFeature } from '../domain/map';
 import type { Photo, Thumbnail, Visit } from '../domain/model';
-import { basemaps, loadBasemapStyle, localBlankBasemap, openFreeMapTrial, type BasemapConfig, type BasemapId } from '../infrastructure/basemap';
+import { basemaps, loadBasemapStyle, localBlankBasemap, openFreeMapTrial, regionalImagerySourceIds, regionalImageryWarning, type BasemapConfig, type BasemapId } from '../infrastructure/basemap';
 import { worldBounds } from './map-bounds';
 import { clusterCandidateSource, type CandidateSource } from './map-candidates';
 import type { MapInsets } from './map-viewport';
@@ -40,6 +40,8 @@ export class PhotoMap {
   private appliedBasemapGeneration = 0;
   private basemapStyleLoaded = false;
   private requiredBackgroundReady = false;
+  private regionalImageryUnavailable = false;
+  private pendingRegionalTiles = new Set<{ state?: string }>();
   private basemapRequest: AbortController | null = null;
   private basemapLoadTimer: ReturnType<typeof setTimeout> | null = null;
   private basemapState: BasemapState = { id: 'standard', state: 'loading', message: '標準地図を読み込んでいます。' };
@@ -103,6 +105,17 @@ export class PhotoMap {
       map.on('zoomend', () => this.onZoomChange(map.getZoom()));
       map.on('idle', () => this.syncThumbnailMarkers());
       map.on('idle', () => this.refreshSelectedCluster());
+      map.on('sourcedataloading', event => {
+        if (this.basemapId !== 'satellite' || this.appliedBasemapGeneration !== this.basemapGeneration || !regionalImagerySourceIds.includes(event.sourceId)) return;
+        this.checkRegionalTiles();
+        const tile = (event as typeof event & { tile?: { state?: string } }).tile;
+        if (tile) this.pendingRegionalTiles.add(tile);
+      });
+      map.on('sourcedataabort', event => {
+        const tile = (event as typeof event & { tile?: { state?: string } }).tile;
+        if (tile) this.pendingRegionalTiles.delete(tile);
+      });
+      map.on('idle', () => this.checkRegionalTiles());
       map.on('moveend', () => this.syncThumbnailMarkers());
       map.on('style.load', () => {
         if (this.basemapEnabled && this.appliedBasemapGeneration === this.basemapGeneration) {
@@ -114,6 +127,8 @@ export class PhotoMap {
         this.update(this.photos, this.visits, false);
       });
       map.on('sourcedata', event => {
+        const regionalTile = (event as typeof event & { tile?: { state?: string } }).tile;
+        if (regionalTile && regionalImagerySourceIds.includes(event.sourceId) && regionalTile.state === 'loaded') this.pendingRegionalTiles.delete(regionalTile);
         if (this.appliedBasemapGeneration !== this.basemapGeneration || event.sourceId !== this.requiredBackgroundSource()) return;
         // Source metadata or an errored tile is not evidence that imagery rendered.
         const tile = (event as typeof event & { tile?: { state?: string } }).tile;
@@ -146,6 +161,11 @@ export class PhotoMap {
           if (this.appliedBasemapGeneration !== this.basemapGeneration) return;
           const context = event as typeof event & { sourceId?: string; tile?: { tileID?: { key?: string } } };
           if (context.sourceId === 'photos' || context.sourceId === 'visits') return;
+          if (context.sourceId && regionalImagerySourceIds.includes(context.sourceId)) {
+            // Coverage gaps must leave the global image and all photo interactions usable.
+            this.warnRegionalImagery();
+            return;
+          }
           if (context.sourceId && context.sourceId === this.requiredBackgroundSource()) {
             this.reportBasemap('error', '背景地図の一部を取得できません。再試行するか、別の地図を選んでください。');
             this.reportFault(this.basemapGuide('画像または標高タイルを取得できません。'));
@@ -211,7 +231,21 @@ export class PhotoMap {
   private finishBasemapLoading(): void {
     if (!this.basemapStyleLoaded || this.requiredBackgroundSource() && !this.requiredBackgroundReady || this.basemapState.state === 'error') return;
     if (this.basemapLoadTimer !== null) { clearTimeout(this.basemapLoadTimer); this.basemapLoadTimer = null; }
-    this.basemapError = false; this.reportFault(null); this.reportBasemap('ready', '');
+    this.basemapError = false; this.reportFault(null);
+    this.reportBasemap('ready', this.regionalImageryUnavailable ? regionalImageryWarning : '');
+  }
+  private warnRegionalImagery(): void {
+    if (!this.basemapEnabled || this.basemapId !== 'satellite' || this.regionalImageryUnavailable) return;
+    this.regionalImageryUnavailable = true;
+    if (this.basemapState.state === 'ready') this.reportBasemap('ready', regionalImageryWarning);
+  }
+  private checkRegionalTiles(): void {
+    // MapLibre 6.18 omits HTTP 404 from error events. Use the tiles supplied in
+    // source events, and release completed/aborted references even while panning.
+    for (const tile of this.pendingRegionalTiles) {
+      if (tile.state === 'errored') this.warnRegionalImagery();
+      if (tile.state !== 'loading' && tile.state !== 'reloading') this.pendingRegionalTiles.delete(tile);
+    }
   }
   private reportBasemap(state: BasemapState['state'], message: string): void {
     this.basemapState = { id: this.basemapId, state, message }; this.basemapListener?.(this.basemapState);
@@ -222,6 +256,8 @@ export class PhotoMap {
     if (this.basemapLoadTimer !== null) { clearTimeout(this.basemapLoadTimer); this.basemapLoadTimer = null; }
     const generation = ++this.basemapGeneration, request = new AbortController();
     this.basemapRequest = request; this.basemapId = id;
+    this.regionalImageryUnavailable = false;
+    this.pendingRegionalTiles.clear();
     this.tileErrors.clear();
     if (this.tileErrorTimer !== null) { clearTimeout(this.tileErrorTimer); this.tileErrorTimer = null; }
     this.reportFault(null);
@@ -551,6 +587,7 @@ export class PhotoMap {
   setBasemap(enabled: boolean): void {
     if (enabled) { void this.chooseBasemap(this.basemapId); return; }
     this.basemapRequest?.abort(); ++this.basemapGeneration;
+    this.pendingRegionalTiles.clear();
     if (this.basemapLoadTimer !== null) { clearTimeout(this.basemapLoadTimer); this.basemapLoadTimer = null; }
     if (!this.map || this.failed || this.basemapEnabled === enabled) return;
     this.basemapEnabled = enabled;

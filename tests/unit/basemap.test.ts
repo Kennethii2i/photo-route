@@ -33,8 +33,26 @@ describe('free world backgrounds', () => {
     expect(imagery.attribution).toContain('2016');
     expect(imagery.attribution).toContain('by/4.0');
     expect(result.sources.names).toEqual(original.sources.names);
-    expect(result.layers.map(layer => layer.id)).toEqual(['world-imagery', 'poi']);
+    expect(result.layers.map(layer => layer.id)).toEqual(['world-imagery', 'japan-imagery', 'us-imagery', 'poi']);
     expect(original.sources['world-imagery']).toBeUndefined();
+  });
+  it('limits public regional views to native zooms and bounded areas without credentials', () => {
+    const result = composeBasemap('satellite', original);
+    expect(result.sources['japan-imagery']).toMatchObject({ type: 'raster', minzoom: 14, maxzoom: 18, tileSize: 256,
+      bounds: [122, 20, 154, 46], tiles: ['https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'] });
+    expect(result.sources['us-imagery']).toMatchObject({ type: 'raster', minzoom: 14, maxzoom: 16, tileSize: 256, bounds: [-125, 24, -66, 50],
+      tiles: ['https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}'] });
+    for (const id of ['japan-imagery', 'us-imagery']) {
+      const source = result.sources[id]!;
+      if (source.type !== 'raster') throw new Error('Expected raster');
+      expect(source.attribution).toBeTruthy();
+      expect(source.tiles?.join()).not.toMatch(/token=|key=|api[_-]?key/i);
+    }
+    expect(JSON.stringify(result.sources['japan-imagery'])).toContain('Axelspace');
+    for (const id of ['standard', 'terrain', 'muted'] as const) {
+      const other = composeBasemap(id, original);
+      expect(other.sources['japan-imagery']).toBeUndefined(); expect(other.sources['us-imagery']).toBeUndefined();
+    }
   });
   it('composes 2D terrain beneath roads and names with a global zoom budget', () => {
     const result = composeBasemap('terrain', original);
