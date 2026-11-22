@@ -50,3 +50,5 @@ main履歴にはローカルパス/過去の実利用バックアップに言及
 [所有者依頼と配信条件](../free-world-basemaps-2026-11-22.md)、[設定](../../src/infrastructure/basemap.ts)、[第三者通知](../../THIRD_PARTY_NOTICES.md)。無料配信の稼働/永続継続は保証しない。
 
 今回の背景地図変更前基準Git HEAD: `b3142ba0cefd217ca015f6e8c2236761d6ccfd7e`
+
+今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`

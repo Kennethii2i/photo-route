@@ -67,3 +67,5 @@ P2.2: 独立した公開用初期履歴、本体コードのMIT採用、第三�
 [計画と検証記録](../free-world-basemaps-2026-11-22.md)、[地図仕様](MAP_AND_GEO.md)。
 
 今回の背景地図変更前基準Git HEAD: `b3142ba0cefd217ca015f6e8c2236761d6ccfd7e`
+
+今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`

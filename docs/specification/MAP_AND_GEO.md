@@ -68,3 +68,5 @@ OpenFreeMap/供給スタイル由来のMapLibre attributionを保持し、管理
 日付変更線をまたぐfitでは最短の経度区間を選び、保存されたGPSを変更しない。実装: [配信設定](../../src/infrastructure/basemap.ts)、[4択UI](../../src/presentation/basemap-control.ts)、[表示境界](../../src/presentation/map-bounds.ts)。[計画と検証](../free-world-basemaps-2026-11-22.md)。
 
 今回の背景地図変更前基準Git HEAD: `b3142ba0cefd217ca015f6e8c2236761d6ccfd7e`
+
+今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`

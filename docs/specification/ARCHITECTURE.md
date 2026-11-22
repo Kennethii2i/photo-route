@@ -82,3 +82,5 @@ Applicationが長辺で拒否された60MP以下のJPEGを識別し、[automatic
 [basemap.ts](../../src/infrastructure/basemap.ts)が配信設定と背景style合成、[PhotoMap](../../src/presentation/map.ts)が非同期切替/世代管理/写真レイヤー再設置、[basemap-control](../../src/presentation/basemap-control.ts)が4択と読込状態、[map-bounds](../../src/presentation/map-bounds.ts)が日付変更線を含む表示境界を担当する。写真/アルバム表示設定と背景切替を分離。Domain/DB/ZIP/依存は変更しない。
 
 今回の背景地図変更前基準Git HEAD: `b3142ba0cefd217ca015f6e8c2236761d6ccfd7e`
+
+今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`

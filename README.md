@@ -102,3 +102,5 @@ npm run build
 このリポジトリは過去の非公開履歴・未承認画像を含まない独立した公開版です。[公開時の選別記録](docs/specification/PUBLICATION_REVIEW.md)は当時の記録として保持しています。[Pages準備案](docs/specification/GITHUB_PAGES.md)はWeb公開に向けた未実施の案です。ローカル起動やCIによってPages公開は行われません。
 
 記載の確認元実装Git HEAD: `989eae47f3ae96fa557b97eb5d7cb63e47e77f9e`
+
+今回の世界背景地図の実装・検証の確認元Git HEAD: `d12df590a808604414a8a4ce6d3a2b02422aadbb`
