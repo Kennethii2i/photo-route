@@ -5,7 +5,7 @@ import { photoPoints, visitPoints } from '../domain/map';
 import { formatOffset, manualGpsCorrection, manualTimeCorrection } from '../domain/corrections';
 import { newVisit, reviseVisit } from '../domain/visits';
 import { PhotoImporter, type ImportProgress } from '../application/import-photos';
-import { LibraryDb, type RecoveryKind } from '../infrastructure/storage';
+import { LibraryDb, EditConflict, type RecoveryKind } from '../infrastructure/storage';
 import { exportArchive, previewArchiveRestore, restoreArchive, streamArchive, verifyExportArchive } from '../infrastructure/archive';
 import { PhotoMap, type CandidateSource } from './map';
 import { createLayout } from './layout';
@@ -17,6 +17,7 @@ import { ErrorNotice, storageErrorText } from './error-notice';
 import { VisitPhotoEditor } from './visit-photo-editor';
 import { PhotoAlbumEditor } from './photo-album-editor';
 import { displayCaptureClock } from './date-display';
+import { backupCapacityText, backupCapacitySummary } from './backup-capacity';
 import { PhotoCorrectionDrafts, type CorrectionFields } from './photo-correction-draft';
 
 const element = <T extends HTMLElement>(selector: string): T => {
@@ -62,6 +63,23 @@ export async function startApp(): Promise<void> {
   const tripSelect = element<HTMLSelectElement>('#trip-select');
   const tripName = element<HTMLInputElement>('#trip-name');
   const photoFiles = element<HTMLInputElement>('#photo-files');
+  let capacityGeneration = 0;
+  async function refreshBackupCapacity(): Promise<void> {
+    const generation = ++capacityGeneration;
+    const targets = ['#backup-capacity', '#import-backup-capacity', '#restore-backup-capacity'];
+    try {
+      const counts = await db.backupCounts();
+      if (generation !== capacityGeneration) return;
+      for (const selector of targets) {
+        const files = selector === '#import-backup-capacity' ? photoFiles.files?.length ?? 0 : 0;
+        element(`${selector} [data-capacity-summary]`).textContent = backupCapacitySummary(counts, files);
+        element(`${selector} [data-capacity-detail]`).textContent = backupCapacityText(counts, files);
+      }
+    } catch {
+      if (generation === capacityGeneration) for (const selector of targets) element(`${selector} [data-capacity-summary]`).textContent = '保存件数を確認できません。上限内か判断できないため、バックアップの保存結果を確認してください。通常保存64 MiB、直接保存256 MiBまでです。';
+    }
+  }
+  element('#header-manage').addEventListener('click', () => { void refreshBackupCapacity(); });
   const importButton = element<HTMLButtonElement>('#import-button');
   const cancelButton = element<HTMLButtonElement>('#cancel-button');
   const duplicateOtherTrip = element<HTMLInputElement>('#duplicate-other-trip');
@@ -148,6 +166,9 @@ export async function startApp(): Promise<void> {
   let albumSaving = false, albumCreationUnknown = false;
   let justCreatedAlbum: string | null = null;
   const correctionDrafts = new PhotoCorrectionDrafts();
+  const correctionExpected = new Map<string, Pick<Photo, 'gpsCorrection' | 'timeCorrection'>>();
+  let expectedVisit: Visit | null = null;
+  let albumEditGeneration = 0;
   let correctionNavigationApproved = false;
   let pendingCorrectionLeave: (() => void) | null = null;
   let discardPendingInputs: (() => void) | null = null;
@@ -602,7 +623,7 @@ export async function startApp(): Promise<void> {
 
 
   function resetVisitForm(): void {
-    selectedVisitId = null; draftPhotoId = null;
+    selectedVisitId = null; draftPhotoId = null; expectedVisit = null; albumEditGeneration++; visitStatus.replaceChildren();
     albumCreationTrip = null; pendingAlbumCreation = null; justCreatedAlbum = null;
     visitView = 'summary'; returnToVisitId = null; visitReturn = null;
     visitSummary.clear(); visitPhotoGrid.setPhotos([], 'no-visit');
@@ -644,6 +665,7 @@ export async function startApp(): Promise<void> {
 
   function openVisitEdit(): void {
     if (!selectedVisitId) return;
+    albumEditGeneration++; visitStatus.replaceChildren();
     visitView = 'edit'; showVisit(selectedVisitId, false); setVisitPanelMode();
     layout.prepareVisitEditor();
     element('#right-panel').scrollTop = 0;
@@ -693,7 +715,7 @@ export async function startApp(): Promise<void> {
     if (reveal && !correctionNavigationApproved && correctionDrafts.dirty(selectedPhotoId)) { requestCorrectionLeave(() => showVisit(id, reveal)); return; }
     if (id !== selectedVisitId && !mayDiscardVisitInput()) return;
     if (focusedVisitId && focusedVisitId !== id) endVisitFocus(false);
-    if (id !== selectedVisitId) returnToVisitId = null;
+    if (id !== selectedVisitId) { returnToVisitId = null; albumEditGeneration++; visitStatus.replaceChildren(); }
     if (id !== selectedVisitId || reveal && (visitView === 'all' || visitView === 'edit' && !hasUnsavedVisitInput())) visitView = 'summary';
     ++visitCandidateGeneration; ++candidateGeneration;
     if (reveal) layout.openDetail('visit', id !== selectedVisitId);
@@ -707,6 +729,7 @@ export async function startApp(): Promise<void> {
     element('#visit-form-source').textContent = '';
     if (!keepUnsavedInput) {
       visitLabel.value = visit.label;
+      expectedVisit = visit;
       savedVisitFormValues = visitFormValues();
     }
     for (const button of visitList.querySelectorAll<HTMLButtonElement>('button[data-visit-id]')) button.setAttribute('aria-pressed', String(button.dataset.visitId === id));
@@ -780,6 +803,11 @@ export async function startApp(): Promise<void> {
       placeholder.textContent = 'サムネイルなし。再生成には原本写真を再選択する必要があります。'; detail.append(placeholder);
     }
     detail.append(title);
+    const previousExpected = correctionExpected.get(photo.id);
+    correctionExpected.set(photo.id, {
+      gpsCorrection: previousExpected && correctionDrafts.dirtyFields(photo.id, ['latitude', 'longitude']) ? previousExpected.gpsCorrection : photo.gpsCorrection,
+      timeCorrection: previousExpected && correctionDrafts.dirtyFields(photo.id, ['clock', 'offset']) ? previousExpected.timeCorrection : photo.timeCorrection,
+    });
     const correctionValues = correctionDrafts.read(photo.id, {
       latitude: photo.gpsCorrection ? String(photo.gpsCorrection.value.latitude) : '',
       longitude: photo.gpsCorrection ? String(photo.gpsCorrection.value.longitude) : '',
@@ -907,22 +935,71 @@ export async function startApp(): Promise<void> {
     const gpsStatus = document.createElement('p'); gpsStatus.setAttribute('role', 'status');
     const gpsActions = document.createElement('div'); gpsActions.className = 'photo-correction-actions'; gpsActions.append(gpsSave, gpsRevert);
     gpsForm.append(lat.label, lat.field, lon.label, lon.field, gpsActions, gpsStatus);
+    const showCorrectionConflict = (status: HTMLElement, kind: 'gpsCorrection' | 'timeCorrection') => {
+      const active = () => selectedPhotoId === photo.id && status.isConnected;
+      const check = document.createElement('button'); check.type = 'button'; check.textContent = '最新状態を確認';
+      check.addEventListener('click', () => {
+        if (!active() || check.getAttribute('aria-busy') === 'true') return;
+        check.setAttribute('aria-busy', 'true');
+        void db.listPhotos().then(all => {
+          if (!active()) return;
+          const restoreFocus = document.activeElement === check;
+          const latest = all.find(item => item.id === photo.id && !item.deletedAt);
+          if (!latest) throw new Error('写真が見つかりません');
+          const current = kind === 'gpsCorrection' ? latest.gpsCorrection ? `${latest.gpsCorrection.value.latitude}, ${latest.gpsCorrection.value.longitude}` : '補正なし（元GPSを使用）'
+            : latest.timeCorrection ? `${latest.timeCorrection.correctedLocalClock} / 時差 ${formatOffset(latest.timeCorrection.correctedOffsetMinutes) || '不明'}` : '補正なし（元日時を使用）';
+          status.textContent = `最新の保存値: ${current}。現在の入力は未保存のまま保持しています。`;
+          const accept = document.createElement('button'); accept.type = 'button'; accept.textContent = 'この保存値を基準に編集を続ける';
+          accept.addEventListener('click', () => {
+            if (!active()) return;
+            const restoreInputFocus = document.activeElement === accept;
+            const expected = correctionExpected.get(photo.id)!;
+            correctionExpected.set(photo.id, { ...expected, [kind]: latest[kind] });
+            status.textContent = '最新の保存値を基準にしました。入力を確認・編集してから保存してください。';
+            if (restoreInputFocus) (kind === 'gpsCorrection' ? lat.field : clock.field).focus({ preventScroll: true });
+          });
+          status.append(accept); if (restoreFocus) accept.focus({ preventScroll: true });
+        }).catch(error => {
+          if (!active()) return;
+          const restoreFocus = document.activeElement === check;
+          status.textContent = `最新状態を確認できません: ${message(error)}`; status.append(check); check.removeAttribute('aria-busy');
+          if (restoreFocus) check.focus({ preventScroll: true });
+        });
+      });
+      status.append(check);
+    };
+    const writeCorrection = async (change: { gpsCorrection: Photo['gpsCorrection'] } | { timeCorrection: Photo['timeCorrection'] }, submitted: Partial<CorrectionFields>, persisted: Partial<CorrectionFields>, status: HTMLElement) => {
+      const kind = 'gpsCorrection' in change ? 'gpsCorrection' : 'timeCorrection';
+      const expected = correctionExpected.get(photo.id)!;
+      let saved = false;
+      try {
+        await db.updatePhotoCorrection(photo.id, change, kind === 'gpsCorrection' ? { gpsCorrection: expected.gpsCorrection } : { timeCorrection: expected.timeCorrection });
+        saved = true;
+        correctionDrafts.saved(photo.id, submitted, persisted);
+        correctionExpected.set(photo.id, { ...expected, ...change });
+        await render();
+      } catch (error) {
+        status.textContent = saved ? `補正は保存済みです。表示を更新できません: ${message(error)}。保存を繰り返さず、一覧から保存内容を確認してください。`
+          : `補正を保存できません: ${message(error)}`;
+        if (error instanceof EditConflict) showCorrectionConflict(status, kind);
+      }
+    };
     gpsForm.addEventListener('submit', event => {
-      event.preventDefault();
-      if (correctionWrites) return;
+      event.preventDefault(); if (correctionWrites) return;
+      const submitted = { latitude: lat.field.value, longitude: lon.field.value };
       correctionWrites++; gpsSave.disabled = true;
       void (async () => {
         try {
-          if (!lat.field.value.trim() || !lon.field.value.trim()) throw new Error('緯度・経度の両方を入力してください');
-          await db.updatePhotoCorrection(photo.id, { gpsCorrection: manualGpsCorrection(Number(lat.field.value), Number(lon.field.value)) });
-          await render();
+          if (!submitted.latitude.trim() || !submitted.longitude.trim()) throw new Error('緯度・経度の両方を入力してください');
+          const gpsCorrection = manualGpsCorrection(Number(submitted.latitude), Number(submitted.longitude));
+          await writeCorrection({ gpsCorrection }, submitted, { latitude: String(gpsCorrection.value.latitude), longitude: String(gpsCorrection.value.longitude) }, gpsStatus);
         } catch (error) { gpsStatus.textContent = `GPS補正を保存できません: ${message(error)}`; }
         finally { correctionWrites--; gpsSave.disabled = false; }
       })();
     });
     gpsRevert.addEventListener('click', () => {
       if (correctionWrites) return; correctionWrites++; gpsRevert.disabled = true;
-      void db.updatePhotoCorrection(photo.id, { gpsCorrection: null }).then(render).catch(error => { gpsStatus.textContent = `GPS補正を解除できません: ${message(error)}`; })
+      void writeCorrection({ gpsCorrection: null }, { latitude: lat.field.value, longitude: lon.field.value }, { latitude: '', longitude: '' }, gpsStatus)
         .finally(() => { correctionWrites--; gpsRevert.disabled = !photo.gpsCorrection; });
     });
     const timeForm = document.createElement('form'); timeForm.setAttribute('aria-label', '撮影日時補正');
@@ -934,18 +1011,20 @@ export async function startApp(): Promise<void> {
     const timeActions = document.createElement('div'); timeActions.className = 'photo-correction-actions'; timeActions.append(timeSave, timeRevert);
     timeForm.append(clock.label, clock.field, offset.label, offset.field, timeActions, timeStatus);
     timeForm.addEventListener('submit', event => {
-      event.preventDefault();
-      if (correctionWrites) return;
+      event.preventDefault(); if (correctionWrites) return;
+      const submitted = { clock: clock.field.value, offset: offset.field.value };
       correctionWrites++; timeSave.disabled = true;
       void (async () => {
-        try { await db.updatePhotoCorrection(photo.id, { timeCorrection: manualTimeCorrection(clock.field.value.trim(), offset.field.value.trim()) }); await render(); }
-        catch (error) { timeStatus.textContent = `撮影日時補正を保存できません: ${message(error)}`; }
+        try {
+          const timeCorrection = manualTimeCorrection(submitted.clock.trim(), submitted.offset.trim());
+          await writeCorrection({ timeCorrection }, submitted, { clock: timeCorrection.correctedLocalClock ?? '', offset: formatOffset(timeCorrection.correctedOffsetMinutes) }, timeStatus);
+        } catch (error) { timeStatus.textContent = `撮影日時補正を保存できません: ${message(error)}`; }
         finally { correctionWrites--; timeSave.disabled = false; }
       })();
     });
     timeRevert.addEventListener('click', () => {
       if (correctionWrites) return; correctionWrites++; timeRevert.disabled = true;
-      void db.updatePhotoCorrection(photo.id, { timeCorrection: null }).then(render).catch(error => { timeStatus.textContent = `撮影日時補正を解除できません: ${message(error)}`; })
+      void writeCorrection({ timeCorrection: null }, { clock: clock.field.value, offset: offset.field.value }, { clock: '', offset: '' }, timeStatus)
         .finally(() => { correctionWrites--; timeRevert.disabled = !photo.timeCorrection; });
     });
     correction.append(gpsForm, timeForm); advanced.append(correction);
@@ -992,7 +1071,7 @@ export async function startApp(): Promise<void> {
 
   async function render(): Promise<void> {
     try {
-      await renderLibrary(); errors.clearDb('read'); hydrated = true; workspaceReady(true);
+      await renderLibrary(); void refreshBackupCapacity(); errors.clearDb('read'); hydrated = true; workspaceReady(true);
     } catch (error) {
       if (!hydrated) workspaceReady(false);
       errors.showDb('read', { title: '保存済みデータを読み込めません', detail: `現在表示できるデータは残しています。保存を再送せず、読み込みだけ再試行します。 ${message(error)}`,
@@ -1070,6 +1149,7 @@ export async function startApp(): Promise<void> {
   layout.onTripCreateOpening(() => { pendingTrip = null; tripCreation = 'idle'; tripForm.reset(); tripCreateStatus.textContent = ''; tripCreateUi(); });
   layout.onTripCreateClosing(() => tripCreation !== 'saving' && tripCreation !== 'unknown');
   layout.onImportRequest(() => {
+    void refreshBackupCapacity();
     if (!trips.some(trip => !trip.deletedAt)) { layout.openTripCreate(true); return false; }
     if (!trips.some(trip => trip.id === tripSelect.value && !trip.deletedAt)) { showImportTripChoice(); return true; }
     importPhase(photoFiles.files?.length ? 'selected' : 'empty');
@@ -1158,6 +1238,7 @@ export async function startApp(): Promise<void> {
     event.preventDefault();
     if (albumSaving) return;
     void (async () => {
+      let saved = false;
       try {
         const tripId = selectedVisitId ? tripSelect.value : albumCreationTrip;
         if (!tripId) throw new Error('先に旅行を選んでください');
@@ -1166,9 +1247,10 @@ export async function startApp(): Promise<void> {
         const submittedFormValues = visitFormValues();
         const values = { label: visitLabel.value, point: selectedVisitId ? visits.find(visit => visit.id === selectedVisitId)?.representativeLocation ?? null : null, startAtUtc: selectedVisitId ? visits.find(visit => visit.id === selectedVisitId)?.userStartAtUtc ?? null : null, endAtUtc: selectedVisitId ? visits.find(visit => visit.id === selectedVisitId)?.userEndAtUtc ?? null : null };
         if (selectedVisitId) {
-          const previous = visits.find(visit => visit.id === selectedVisitId);
+          const previous = expectedVisit?.id === selectedVisitId ? expectedVisit : null;
           if (!previous) throw new Error('アルバムが見つかりません');
-          await db.updateVisit(reviseVisit(previous, values));
+          await db.updateVisit(reviseVisit(previous, { ...values, point: previous.representativeLocation, startAtUtc: previous.userStartAtUtc, endAtUtc: previous.userEndAtUtc }), previous);
+          saved = true;
           savedVisitFormValues = submittedFormValues;
           visitStatus.textContent = 'アルバムを保存しました';
           visitView = 'summary';
@@ -1191,12 +1273,45 @@ export async function startApp(): Promise<void> {
           }
           albumCreationUnknown = false; justCreatedAlbum = visit.id;
           selectedVisitId = visit.id; draftPhotoId = null;
+          saved = true;
           savedVisitFormValues = submittedFormValues;
           visitStatus.textContent = '';
           visitView = 'summary';
         }
         await render();
-      } catch (error) { visitStatus.textContent = `アルバムを保存できません: ${message(error)}`; }
+      } catch (error) {
+        visitStatus.textContent = saved ? `アルバムは保存済みです。表示を更新できません: ${message(error)}。保存を繰り返さず、保存内容を確認してください。` : `アルバムを保存できません: ${message(error)}`;
+        if (error instanceof EditConflict) {
+          const id = selectedVisitId, generation = albumEditGeneration;
+          const active = () => selectedVisitId === id && visitView === 'edit' && generation === albumEditGeneration;
+          const check = document.createElement('button'); check.type = 'button'; check.textContent = '最新状態を確認';
+          check.addEventListener('click', () => {
+            if (!active() || check.getAttribute('aria-busy') === 'true') return;
+            check.setAttribute('aria-busy', 'true');
+            void db.listVisits().then(all => {
+              if (!active()) return;
+              const restoreFocus = document.activeElement === check;
+              const latest = all.find(item => item.id === id && !item.deletedAt);
+              if (!latest) throw new Error('アルバムが見つかりません');
+              visitStatus.textContent = `最新の保存名: ${latest.label}。入力は未保存のまま保持しています。`;
+              const accept = document.createElement('button'); accept.type = 'button'; accept.textContent = 'この保存値を基準に編集を続ける';
+              accept.addEventListener('click', () => {
+                if (!active()) return;
+                const restoreInputFocus = document.activeElement === accept;
+                expectedVisit = latest; savedVisitFormValues = { label: latest.label }; visitStatus.textContent = '最新の保存値を基準にしました。入力を確認・編集してから保存してください。';
+                if (restoreInputFocus) visitLabel.focus({ preventScroll: true });
+              });
+              visitStatus.append(accept); if (restoreFocus) accept.focus({ preventScroll: true });
+            }).catch(lookupError => {
+              if (!active()) return;
+              const restoreFocus = document.activeElement === check;
+              visitStatus.textContent = `最新状態を確認できません: ${message(lookupError)}`; visitStatus.append(check); check.removeAttribute('aria-busy');
+              if (restoreFocus) check.focus({ preventScroll: true });
+            });
+          });
+          visitStatus.append(check);
+        }
+      }
       finally { albumSaving = false; updateAlbumFormControls(); }
     })();
   });
@@ -1222,6 +1337,7 @@ export async function startApp(): Promise<void> {
   };
   importPhase('empty');
   photoFiles.addEventListener('change', () => {
+    void refreshBackupCapacity();
     if (importer) return;
     const files = Array.from(photoFiles.files ?? []);
     element('#import-selection-count').textContent = files.length ? `${files.length}枚選択` : '写真未選択';
@@ -1262,6 +1378,7 @@ export async function startApp(): Promise<void> {
       lastImportMessage = `${progress.job.processed}/${progress.job.total}枚`;
       layout.setImportState(true, lastImportMessage, importTarget);
     };
+    void refreshBackupCapacity();
     void importer.importFiles(files, importTripId, update, { allowDuplicateAcrossTrips: duplicateOtherTrip.checked })
       .then(async report => {
         update(report); await render();
@@ -1349,7 +1466,7 @@ export async function startApp(): Promise<void> {
     if (!file) { archiveStatus.textContent = 'ZIPアーカイブを選んでください'; return; }
     pendingRestoreFile = null; restoreConflict.hidden = true;
     const controller = beginArchiveWork(); archiveStatus.textContent = 'ZIPを検証しています。既存データは確認前に変更しません。';
-    void previewArchiveRestore(db, file, controller.signal).then(async preview => {
+    void refreshBackupCapacity().then(() => previewArchiveRestore(db, file, controller.signal)).then(async preview => {
       if (preview.conflictingTrips || preview.conflictingUnclassifiedPhotos) {
         pendingRestoreFile = file;
         element('#restore-preview').textContent = `旅行${preview.conflictingTrips}件・未分類写真${preview.conflictingUnclassifiedPhotos}件が競合します。別コピーを選ぶと新しいIDで追加し、既存データは変更しません。`;
@@ -1363,6 +1480,7 @@ export async function startApp(): Promise<void> {
     }).catch(error => { archiveStatus.textContent = archiveError(error, '復元を拒否しました'); }).finally(endArchiveWork);
   });
   archiveFile.addEventListener('change', () => {
+    void refreshBackupCapacity();
     pendingRestoreFile = null; restoreConflict.hidden = true;
     const file = archiveFile.files?.[0];
     archiveFileSummary.textContent = file ? `選択中: ${file.name}（${file.size.toLocaleString('ja-JP')} bytes）` : 'ZIPが選択されていません。';

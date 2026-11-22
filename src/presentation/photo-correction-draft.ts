@@ -16,6 +16,18 @@ export class PhotoCorrectionDrafts {
   change(id: string, field: keyof CorrectionFields, value: string): void {
     const draft = this.drafts.get(id); if (draft) draft.values[field] = value;
   }
+  dirtyFields(id: string, fields: Array<keyof CorrectionFields>): boolean {
+    const draft = this.drafts.get(id);
+    return Boolean(draft && fields.some(field => draft.values[field] !== draft.saved[field]));
+  }
+  /** Acknowledge only submitted fields; typing performed during the write remains a draft. */
+  saved(id: string, submitted: Partial<CorrectionFields>, persisted: Partial<CorrectionFields> = submitted): void {
+    const draft = this.drafts.get(id); if (!draft) return;
+    for (const field of Object.keys(submitted) as Array<keyof CorrectionFields>) {
+      if (draft.values[field] === submitted[field]) draft.values[field] = persisted[field]!;
+      draft.saved[field] = persisted[field]!;
+    }
+  }
   dirty(id: string | null): boolean {
     const draft = id ? this.drafts.get(id) : undefined;
     return Boolean(draft && (Object.keys(draft.values) as Array<keyof CorrectionFields>).some(field => draft.values[field] !== draft.saved[field]));
