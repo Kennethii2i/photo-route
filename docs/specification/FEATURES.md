@@ -8,6 +8,7 @@
 | 旅行管理 | 旅行を切り替え、ごみ箱移動は確認後に実行 | [layout](../../src/presentation/layout.ts)、[app](../../src/presentation/app.ts) `stageTrash` | 子レコードの完全削除ではない。未保存変更は保護 |
 | 写真追加 | 写真一覧の件数右の＋から独立した取り込みダイアログへ。ファイル結果と処理件数は1枚につき1回計上 | [layout](../../src/presentation/layout.ts) `openImport`、[importer](../../src/application/import-photos.ts) `importFiles` | 生存するTripが必要。進捗保存失敗は全体エラーとして案内し、保存済み写真を確認する。[取り込み仕様](IMPORT_AND_PHOTOS.md) |
 | 重複判定 | 元バイト列のSHA-256一致は既定スキップ。明示設定で別旅行へ別Photoとして追加可能 | [importer](../../src/application/import-photos.ts)、[DB](../../src/infrastructure/storage.ts) `findByHash`/`savePhoto` | 同じ旅行へ二重取り込み不可。類似画像判定ではない |
+| 大JPEGの自動縮小 | 対応する写真は原本選択だけで表示用画像を生成し「追加」 | [専用Worker](../../src/infrastructure/automatic-jpeg.worker.ts) | 長辺12000px超・60MP以下・64MiB以下の限定baseline JPEG。失敗はPhoto未保存、timeout/稼働中中断等は再読込が必要。[取り込み仕様](IMPORT_AND_PHOTOS.md) |
 | 写真一覧 | 撮影日別サムネイルグリッドと件数。画面周辺だけ仮想描画/遅延取得。再描画時のフォーカスを保持し、Tab/Shift+Tabで未描画の写真へ進める | [PhotoGrid](../../src/presentation/photo-grid.ts) | 範囲外・0件時は一覧容器へフォーカスを戻す。サムネイル欠損時はプレースホルダー。[UI/UX](UI_UX.md) |
 | 写真検索 | ファイル名、撮影日範囲、確認済み/参考/GPSなし、所属あり/なし/特定アルバムで絞る | [photo-filter](../../src/presentation/photo-filter.ts)、[app](../../src/presentation/app.ts) `applyPhotoFilter`/`renderLibrary` | 検索語は検索欄だけ。日付範囲を1条件として数える。特定アルバム候補は現在の旅行から生成 |
 | プレビュー/詳細 | 選択でコンパクトプレビュー、詳細ボタンで情報/編集へ。同じ写真の再選択で解除 | [app](../../src/presentation/app.ts) `choosePhoto`/`showDetail` | 単なる選択はズームしない。写真ごとに補正ドラフトを保持 |
@@ -31,4 +32,4 @@
 
 `PhotoFilter.visit`の`album:<id>`条件は通常の絞り込みセレクターにも接続されています。同名アルバム候補は番号で区別します。アルバム限定地図はこの検索とは独立したUI状態です。
 
-今回変更した機能行の確認元実装Git HEAD: `a493c20509dea1654434bf05ac8e8986da846fce`
+今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`

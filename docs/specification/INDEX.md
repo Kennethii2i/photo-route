@@ -6,6 +6,8 @@
 
 同日の[写真取り込み高速化の計画・検証と後続課題](../import-performance-2026-11-22.md)は別の変更単位です。
 
+その後の[大きなJPEGの自動取り込み・限定対応と検証](../automatic-large-jpeg-2026-11-22.md)では、長辺制限で拒否される60MP以下のJPEGを原本選択だけで処理します。試作64MPと製品対応範囲を区別します。
+
 ## 読む順序
 
 初参加者はルートの[README](../../README.md)で環境を作り、[CONTRIBUTING](../../CONTRIBUTING.md)と[AGENTS](../../AGENTS.md)で共同開発ルールを確認します。仕様は PRODUCT → ARCHITECTURE → DEVELOPMENT → DATA_MODEL → STORAGE_AND_BACKUP の順に読み、変更対象の機能文書とTESTINGへ進んでください。
@@ -48,4 +50,4 @@
 
 機能変更と同じ変更単位で該当文書・関連テスト・CHANGELOGを更新します。新しい仕様はこの目次へ登録し、実装ファイルと検証の根拠を付けます。[更新対象の対応表](DEVELOPMENT.md)と[CONTRIBUTING](../../CONTRIBUTING.md)を使用してください。未実装案には「将来案」「未実装」、実測していない内容には「未確認」を付けます。
 
-今回の入口・参照表記の確認元実装Git HEAD: `a493c20509dea1654434bf05ac8e8986da846fce`
+今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`

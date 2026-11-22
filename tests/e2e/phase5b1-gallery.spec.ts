@@ -115,7 +115,7 @@ test('date grid, compact preview and folded advanced editing keep source uncerta
   await expect(page.getByRole('button', { name: '地図で見る' })).toHaveCount(0);
   await page.locator(`#photo-list button[data-photo-id="${ids[3]}"]`).click();
   await expect(page.locator('#photo-detail')).toContainText('撮影日時不明');
-  await expect(page.locator('#photo-detail')).toContainText('再生成には原本写真を再選択');
+  await expect(page.locator('#photo-detail')).toContainText('表示用画像は保存されていません。写真情報は確認できます。');
   await page.locator('#right-close').click();
   await expect(page.locator(`#photo-list button[data-photo-id="${ids[3]}"]`)).toHaveAttribute('aria-pressed', 'true');
   await page.evaluate(() => {
