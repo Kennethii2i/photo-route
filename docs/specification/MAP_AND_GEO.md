@@ -98,3 +98,5 @@ source boundsは要求を制限する矩形で、厳密な国境や実画像の�
 線幅は既知のzoom interpolateの出力stopか数値のみ拡大し、zoom式全体を乗算式で包まない。元filter/minzoom/dash/衝突制御/レイヤー順/出典を維持。散策もworld-elevationの画像成功と期限を確認する。[候補比較・計画・検証](../more-map-layers-2026-11-23.md)。
 
 今回追加地図変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
+
+今回追加地図の実装・検証の確認元Git HEAD: `4b7c4382f05f0cc1fab695c00b4870094ca4c7ab`

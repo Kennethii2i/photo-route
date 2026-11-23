@@ -77,3 +77,5 @@ Esri利用の所有者承諾に伴い、[資格情報規則](EXTERNAL_API_CREDEN
 鉄道/散策/ダークは既存の配信先のみ。鉄道はOpenFreeMap Liberty、散策はLibertyと既存Mapterhorn、ダークはOpenFreeMap Dark。初回の追加欄展開やhoverだけでは地図をfetchせず、選択時に取得する。新しい送信先・APIキー・課金・独自永続キャッシュは増やさない。写真/Exif/名前/所属を外部へ送らず、既存の閲覧地域/IPに関する説明と帰属を維持。[候補の未導入範囲](../more-map-layers-2026-11-23.md)を参照。
 
 今回追加地図変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
+
+今回追加地図の実装・検証の確認元Git HEAD: `4b7c4382f05f0cc1fab695c00b4870094ca4c7ab`

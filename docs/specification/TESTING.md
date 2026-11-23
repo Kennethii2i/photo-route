@@ -155,3 +155,5 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 [basemap単体](../../tests/unit/basemap.test.ts)に基本/追加区分、Dark URL、鉄道のzoom stop値変換とfilter/minzoom/dash/元style不変、散策の歩道と陰影順を追加。[地図E2E](../../tests/e2e/free-world-basemaps.spec.ts)に無通信展開・基本4の維持・focus/選択・全追加切替・DB/カメラ/写真詳細保持・追加選択からの再open・情報のEnter操作・320×568タッチ/ヒット・追加style失敗と再試行を追加。旧情報アイコン試験は「もっと見る」内の経路へ変更し、既存の操作試験は維持。実配信と省略は[実行記録](../more-map-layers-2026-11-23.md)を参照。
 
 今回追加地図変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
+
+今回追加地図の実装・検証の確認元Git HEAD: `4b7c4382f05f0cc1fab695c00b4870094ca4c7ab`

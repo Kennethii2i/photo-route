@@ -67,3 +67,5 @@ Photo Route本体のコードは[MIT](LICENSE)です。この許諾は、権利�
 Darkは[OpenFreeMap公式style](https://openfreemap.org/quick_start/)と[公開fork](https://github.com/hyperknot/openfreemap-styles)を実行時に利用する。元となる[Dark Matterの許諾](https://github.com/openmaptiles/dark-matter-gl-style/blob/master/LICENSE.md)はコードBSD-3-Clause、デザインCC BY 4.0、CartoDB/Stamen/Paul Norman由来部分CC BY 3.0。地図上のOpenMapTiles/OpenStreetMap等の実際の帰属を維持し、本体MITへ置き換えない。
 
 今回追加地図変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
+
+今回追加地図の実装・検証の確認元Git HEAD: `4b7c4382f05f0cc1fab695c00b4870094ca4c7ab`

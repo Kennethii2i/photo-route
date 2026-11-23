@@ -51,3 +51,5 @@ DB v3/ZIP v2・写真原本・保存API・GPS/日時は無変更。追加の種�
 候補のWaymarked Trailsは公式のReferer/キャッシュ条件と新送信先承認が必要で未導入。地質APIは稼働と凡例の確認前。今回の追加3種類にそれらの実データが含まれるとは表示しない。
 
 変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
+
+今回追加地図の実装・検証の確認元Git HEAD: `4b7c4382f05f0cc1fab695c00b4870094ca4c7ab`
