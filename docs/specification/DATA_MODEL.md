@@ -154,3 +154,11 @@ IndexedDB自体にリレーショナルDBの外部キー制約はありません
 今回の自動取り込み変更前基準Git HEAD: `22521bdb8e7ea9f944251039d185b221da69c102`
 
 今回の自動取り込み実装・検証の確認元Git HEAD: `9dcef54e80cacc4e2be5d7aa3d0ba395a917d396`
+
+## 2026-11-23 新規旅行名と完全削除
+
+新規`createTrip`だけでtrim後の同名を拒否する。既存の同名Trip・ZIPから復元される同名を自動変更しない。DB unique index/モデル全体の一意性は追加しない。
+
+確認付きの完全削除は[保存仕様](STORAGE_AND_BACKUP.md)の単一トランザクションで参照を保つ。DB v3/ZIP v2・各レコード・recoveryの形式・旧値の意味は変更しない。消えた対象の既存履歴は保持し、条件を満たさないUndoは拒否する。
+
+今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`

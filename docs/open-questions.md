@@ -33,3 +33,9 @@ Before making a change requiring external photo/location transfer; accepting new
 ## Not blockers for Phase 0
 
 Full screen design, cluster marker artwork, automatic travel classification, route engine selection, mobile GPS recording, automatic syncing, RAW/video support, multilingual UI.
+
+## 2026-11-23 O-12の限定的な所有者承認
+
+O-12の長期保持/自動消去の未決事項はOPENのまま維持する。所有者は[確認付き単項目完全削除の安全策](trip-name-trash-safety-2026-11-23.md)に「この安全策で実装する（推奨）」と回答した。今回に限り、最新全体ZIPの再選択検証・明示確認・単一トランザクションの失敗時ロールバック・既存追加型ZIP復旧を条件に実装する。操作履歴/jobsは保持し、自動purge・履歴消去・上書き復元は承認されていない。上表の完全削除停止はこの限定承認を受ける前の方針として読み、無条件の削除許可へ拡大しない。
+
+今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`

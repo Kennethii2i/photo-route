@@ -4,7 +4,7 @@
 
 | 機能 | 利用者から見た動作 | 主な実装 | 制約 |
 |---|---|---|---|
-| 旅行の作成/選択 | ヘッダーの旅行セレクター/旅行管理から名前を入力。作成結果は作成画面内に表示 | [app](../../src/presentation/app.ts) `confirmCreatedTrip`、[layout](../../src/presentation/layout.ts) `openTripCreate`、[DB](../../src/infrastructure/storage.ts) `createTrip` | 名前変更UIなし。自動で既定旅行を作らない |
+| 旅行の作成/選択 | ヘッダーの旅行セレクター/旅行管理から名前を入力。作成結果は作成画面内に表示 | [app](../../src/presentation/app.ts) `confirmCreatedTrip`、[layout](../../src/presentation/layout.ts) `openTripCreate`、[DB](../../src/infrastructure/storage.ts) `createTrip` | 新規作成は前後空白を除いた同名（ごみ箱含む）を拒否。既存重複/ZIP復元は保持。名前変更UIなし |
 | 旅行管理 | 旅行を切り替え、ごみ箱移動は確認後に実行 | [layout](../../src/presentation/layout.ts)、[app](../../src/presentation/app.ts) `stageTrash` | 子レコードの完全削除ではない。未保存変更は保護 |
 | 写真追加 | 写真一覧の件数右の＋から独立した取り込みダイアログへ。ファイル結果と処理件数は1枚につき1回計上 | [layout](../../src/presentation/layout.ts) `openImport`、[importer](../../src/application/import-photos.ts) `importFiles` | 生存するTripが必要。進捗保存失敗は全体エラーとして案内し、保存済み写真を確認する。[取り込み仕様](IMPORT_AND_PHOTOS.md) |
 | 重複判定 | 元バイト列のSHA-256一致は既定スキップ。明示設定で別旅行へ別Photoとして追加可能 | [importer](../../src/application/import-photos.ts)、[DB](../../src/infrastructure/storage.ts) `findByHash`/`savePhoto` | 同じ旅行へ二重取り込み不可。類似画像判定ではない |
@@ -21,7 +21,7 @@
 | アルバム限定地図 | 「地図で見る」で所属写真の位置だけ表示。×で通常検索の地図へ復帰 | [app](../../src/presentation/app.ts) `startVisitFocus`/`endVisitFocus` | GPSのない写真に代表地点を割り当てない |
 | 地図で写真選択 | 単独マーカー/一覧からプレビュー。見えない場合だけズーム不変でパン | [PhotoMap](../../src/presentation/map.ts) `selectPhoto`/`revealPhoto` | クラスタ所属は確認できた場合だけ輪郭表示。専用の重複マーカーは作らない |
 | クラスタ操作 | クラスタ直接タップで拡大。分離しない写真は最大12枚を画面内に展開 | [map](../../src/presentation/map.ts) `selectAt`/`showSpider`、[配置](../../src/presentation/map-spider-layout.ts) | 領域不足/13枚以上は既存写真一覧へ。ページ送りや新しい選択モーダルなし |
-| ごみ箱/復元 | 写真詳細の地図隣アイコン、アルバム概要、旅行管理から確認→移動。管理から復元 | [app](../../src/presentation/app.ts) `stageTrash`/`renderRecovery`、[DB](../../src/infrastructure/storage.ts) | 写真本体の移動と所属解除は別操作。完全削除UIなし |
+| ごみ箱/復元 | 写真詳細の地図隣アイコン、アルバム概要、旅行管理から確認→移動。管理から復元 | [app](../../src/presentation/app.ts) `stageTrash`/`renderRecovery`、[DB](../../src/infrastructure/storage.ts) | 写真本体の移動と所属解除は別操作。完全削除は各項目の確認と最新全体ZIPの再選択・検証が必須。写真原本・履歴は保持 |
 | ZIP保存/復元 | 通常ダウンロード/対応ブラウザの直接保存、ZIP選択、検証、衝突時の別コピー復元 | [archive](../../src/infrastructure/archive.ts)、[app](../../src/presentation/app.ts) | 原本・jobs・recoveryは含まない。v2出力/v1互換入力 |
 | バックアップ件数案内 | 管理・写真取り込み・復元前に全旅行/ごみ箱を含む累積件数を表示。上限への接近・超過・選択分による超過可能性を案内 | [backup-capacity](../../src/presentation/backup-capacity.ts)、[DB](../../src/infrastructure/storage.ts) `backupCounts`、[app](../../src/presentation/app.ts) | 警告のみで固定取り込み禁止を追加しない。5000枚等の上限と通常64 MiB/直接256 MiBは維持。分割バックアップは未実装。[保存仕様](STORAGE_AND_BACKUP.md) |
 | 障害/未保存保護 | 基本画面の障害案内、再試行、未保存入力の保持/破棄/継続、保存状態確認 | [error-notice](../../src/presentation/error-notice.ts)、[draft](../../src/presentation/photo-correction-draft.ts)、[app](../../src/presentation/app.ts) | 保存結果不明を成功扱いせず、無条件再送しない |
@@ -60,3 +60,7 @@
 今回追加地図変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
 
 今回追加地図の実装・検証の確認元Git HEAD: `4b7c4382f05f0cc1fab695c00b4870094ca4c7ab`
+
+確認付き完全削除は[trash-deletion-dialog](../../src/presentation/trash-deletion-dialog.ts)、削除範囲は[trash-deletion-plan](../../src/infrastructure/trash-deletion-plan.ts)、保存と検証は[storage](../../src/infrastructure/storage.ts)を参照。確認後の変更・失敗・結果不明は[復旧仕様](ERRORS_AND_RECOVERY.md)に従う。
+
+今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`

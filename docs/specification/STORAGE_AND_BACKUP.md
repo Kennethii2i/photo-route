@@ -16,7 +16,7 @@ v2→v3は一つのversionchangeトランザクションで実行します。Tri
 
 | API | 保存と安全条件 |
 |---|---|
-| `createTrip` | 既存ID拒否、Trip保存。画面は同じID/内容の照会で作成結果を確認 |
+| `createTrip` | 既存IDと前後空白を除いた同名（ごみ箱含む）を同一readwriteトランザクションで拒否。画面は同じID/内容の照会で作成結果を確認 |
 | `createVisit(visit, [])` | 空アルバム作成。写真IDを同時に渡す旧方式は拒否 |
 | `updateVisit` | 既存アルバム/Trip整合性を検証し、更新とrecoveryを同じトランザクションで保存 |
 | `savePhoto` | Photo/サムネイルを一体保存。Trip生存・SHA-256重複・参照を再検証。旧visitId非nullを拒否 |
@@ -93,3 +93,21 @@ DBへの確定前に中断/検証失敗なら変更しません。確定後の�
 根拠: [保存API](../../src/infrastructure/storage.ts)、[件数案内](../../src/presentation/backup-capacity.ts)、[競合/履歴失敗試験](../../tests/e2e/safety-ux-improvements.spec.ts)。
 
 今回変更の確認基準Git HEAD: `26093c16cec1924c8110efe5f932bd7159a8ca13`
+
+## 2026-11-23 旅行名と確認付き完全削除
+
+所有者承認の範囲は[計画・承認・検証](../trip-name-trash-safety-2026-11-23.md)を参照。新規旅行はtrim後の同名を拒否し、大文字小文字・文字幅の同一視は追加しない。既存重複やZIP復元は互換性のため保持し、自動改名・統合しない。
+
+`prepareTrashDeletion`はごみ箱内の単項目から削除範囲を計画し、そのDBインスタンスだけが使える不透明な計画と全体Snapshotをメモリーに保持する。`verifyTrashDeletionBackup`は利用者が再選択したZIPを既存の`verifyExportArchive`で全体・サムネイルSHA-256まで照合する。未検証・不一致・破損・別インスタンスの計画では実行しない。新しいDBストア・永続receiptは追加しない。
+
+`permanentlyDeleteFromTrash`は一度だけ発行でき、全5保存ストアとjobs/recoveryを含むreadwriteトランザクションで現在Snapshotの指紋を再検査する。Blob/WebCrypto処理中はIDB要求でトランザクションを保持し、次のIDB成功イベントで削除要求を発行する。確認後の変更、対象旅行のrunningジョブ、代表写真参照を壊す削除は拒否する。削除範囲は以下。失敗時は全ストアをabortし、途中まで確定しない。
+
+- 旅行: 旅行内の全アルバム・写真・サムネイル・所属。子のdeletedAtがnullでも含む。
+- アルバム: 本体とその所属だけ。写真・サムネイル・他アルバムの所属は保持。
+- 写真: 本体・サムネイル・全所属。残るアルバムの旧代表写真に使われていれば拒否し、旧保存値をnull化しない。
+
+操作履歴・取り込み履歴は保持するため過去の名前・写真情報が残る。既存Undoの期待値比較は維持し、存在しない対象を再作成しない。一括空化・自動消去はない。`trashDeletionStatus`は計画時の前後指紋と現在Snapshotから状態を照会し、不明時は削除を盲目的に再送しない。
+
+削除後の復旧は検証したZIPを既存の追加型復元へ渡す。旅行丸ごと削除では元IDで追加できる。写真/アルバムだけの場合は残存旅行と衝突するため「別コピーとして復元」で旅行全体を別IDへ復旧する場合がある。上書き・部分マージは追加しない。ZIPにjobs/recovery/原本は含まない。DB v3/ZIP v2は維持する。
+
+今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`
