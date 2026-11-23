@@ -103,3 +103,9 @@
 今回追加地図変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
 
 今回追加地図の実装・検証の確認元Git HEAD: `4b7c4382f05f0cc1fab695c00b4870094ca4c7ab`
+
+## 追加3地図のmain統合確認
+
+[鉄道・散策・ダークと「もっと見る」の承認・統合検証](../more-map-layers-main-integration-2026-11-23.md)。今回の承認はローカルmain統合まで。
+
+統合対象の確認元Git HEAD: `d93490104a84fc8677451338d339188331b5f2ad`
