@@ -162,3 +162,5 @@ IndexedDB自体にリレーショナルDBの外部キー制約はありません
 確認付きの完全削除は[保存仕様](STORAGE_AND_BACKUP.md)の単一トランザクションで参照を保つ。DB v3/ZIP v2・各レコード・recoveryの形式・旧値の意味は変更しない。消えた対象の既存履歴は保持し、条件を満たさないUndoは拒否する。
 
 今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`
+
+今回旅行名・完全削除の実装・検証の確認元Git HEAD: `3e1a03b99e48a8d32bf1d5e7ffd2fca2fdd0192a`

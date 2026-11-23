@@ -75,3 +75,5 @@ timeout/Worker異常/不正応答では全体を止めます。Job.interrupted�
 確定後は検証したZIPで復旧する。写真/アルバム単独の削除では「別コピーとして復元」が必要になる場合があり、元旅行へ部分マージしない。元写真・操作履歴・取り込み履歴はZIPの対象外。[保存仕様](STORAGE_AND_BACKUP.md)と[安全試験](../../tests/e2e/trip-name-trash-safety.spec.ts)を参照。
 
 今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`
+
+今回旅行名・完全削除の実装・検証の確認元Git HEAD: `3e1a03b99e48a8d32bf1d5e7ffd2fca2fdd0192a`

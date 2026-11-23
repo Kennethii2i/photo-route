@@ -167,3 +167,5 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 実行例: `PHOTO_ROUTE_TEST_BROWSER=chromium PHOTO_ROUTE_TEST_PORT=18310 npx playwright test tests/e2e/trip-name-trash-safety.spec.ts tests/e2e/developer-onboarding.spec.ts tests/e2e/phase2c-recovery.spec.ts --reporter=line`（PowerShellでは同名環境変数を個別設定）。実行結果と省略は[計画・検証](../trip-name-trash-safety-2026-11-23.md)に記録する。DB版/ZIP版を変えないため全移行・全歴史的E2E・大量ZIPは繰り返さない。
 
 今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`
+
+今回旅行名・完全削除の実装・検証の確認元Git HEAD: `3e1a03b99e48a8d32bf1d5e7ffd2fca2fdd0192a`

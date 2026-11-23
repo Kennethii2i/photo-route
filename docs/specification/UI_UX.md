@@ -171,3 +171,5 @@ hoverだけでは追加欄・通信・選択・focusを変えない。明示展�
 原本を削除しないこと、履歴保持、ZIPからの復旧（部分削除後は旅行の復元コピーになる場合がある）を説明する。詳細は[保存仕様](STORAGE_AND_BACKUP.md)、[承認記録](../trip-name-trash-safety-2026-11-23.md)。
 
 今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`
+
+今回旅行名・完全削除の実装・検証の確認元Git HEAD: `3e1a03b99e48a8d32bf1d5e7ffd2fca2fdd0192a`

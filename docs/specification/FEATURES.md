@@ -64,3 +64,5 @@
 確認付き完全削除は[trash-deletion-dialog](../../src/presentation/trash-deletion-dialog.ts)、削除範囲は[trash-deletion-plan](../../src/infrastructure/trash-deletion-plan.ts)、保存と検証は[storage](../../src/infrastructure/storage.ts)を参照。確認後の変更・失敗・結果不明は[復旧仕様](ERRORS_AND_RECOVERY.md)に従う。
 
 今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`
+
+今回旅行名・完全削除の実装・検証の確認元Git HEAD: `3e1a03b99e48a8d32bf1d5e7ffd2fca2fdd0192a`
