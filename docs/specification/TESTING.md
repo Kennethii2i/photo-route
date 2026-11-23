@@ -157,3 +157,15 @@ PowerShellで代表2ファイルを実行する例は、未使用ポートを指
 今回追加地図変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
 
 今回追加地図の実装・検証の確認元Git HEAD: `4b7c4382f05f0cc1fab695c00b4870094ca4c7ab`
+
+## 2026-11-23 新規旅行名・完全削除の安全試験
+
+[専用E2E](../../tests/e2e/trip-name-trash-safety.spec.ts)は同名/trim/ごみ箱/2接続同時作成、既存重複の互換復元、3対象の削除範囲、共有写真と別Tripの全レコード/Blobの保持、未検証/別インスタンス/破損/不一致/古いZIP、検証後のレコードとBlob更新、旧代表写真の参照保護、取り込み中拒否、部分削除失敗の原子性、履歴保持とUndo非復活、ZIPの元ID/衝突コピーでの復旧を確認する。
+
+確認画面はPC1440と320×568の長名、初期フォーカス/対象と取消の可視性、Escape、ZIP検証、保存中/二重送信、確定応答喪失、表示再取得失敗、競合理由の再照会保持を対象にする。画像は`test-results/trash-safety/`へ出力する。テストが作る合成データと専用DBのみで、地図通信は模擬応答。
+
+実行例: `PHOTO_ROUTE_TEST_BROWSER=chromium PHOTO_ROUTE_TEST_PORT=18310 npx playwright test tests/e2e/trip-name-trash-safety.spec.ts tests/e2e/developer-onboarding.spec.ts tests/e2e/phase2c-recovery.spec.ts --reporter=line`（PowerShellでは同名環境変数を個別設定）。実行結果と省略は[計画・検証](../trip-name-trash-safety-2026-11-23.md)に記録する。DB版/ZIP版を変えないため全移行・全歴史的E2E・大量ZIPは繰り返さない。
+
+今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`
+
+今回旅行名・完全削除の実装・検証の確認元Git HEAD: `3e1a03b99e48a8d32bf1d5e7ffd2fca2fdd0192a`

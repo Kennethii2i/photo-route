@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { photoAlbumLinkSchema, photoSchema, thumbnailMetaSchema, tripSchema, validateAlbumLinks, validateRelations, visitSchema, type Photo, type PhotoAlbumLink, type Thumbnail, type Trip, type Visit } from '../domain/model';
 import { inspectImage, sha256 } from './image';
-import { LibraryDb, type Snapshot } from './storage';
+import type { LibraryDb, Snapshot } from './storage';
 import { MAX_ARCHIVE_BYTES, MAX_BUFFERED_ARCHIVE_BYTES, MAX_ENTRIES, MAX_RECORD_ENTRY_BYTES, openZip, ZipStreamWriter } from './zip-stream';
 
 export { MAX_ARCHIVE_BYTES, MAX_BUFFERED_ARCHIVE_BYTES } from './zip-stream';
@@ -129,6 +129,8 @@ async function fingerprint(snapshot: Snapshot, signal?: AbortSignal): Promise<st
   for (const { blob, ...meta } of byId(snapshot.thumbnails)) { checkCancelled(signal); thumbHashes.push({ ...meta, sha256: await sha256(new Uint8Array(await blob.arrayBuffer())) }); }
   return sha256(jsonBytes({ trips: byId(snapshot.trips), visits: byId(snapshot.visits), photos: byId(snapshot.photos), thumbnails: thumbHashes, links: byLink(snapshot.links) }));
 }
+
+export { fingerprint as snapshotFingerprint };
 
 export async function verifyExportArchive(source: Snapshot, blob: Blob, signal?: AbortSignal): Promise<void> {
   if (await fingerprint(source, signal) !== await fingerprint(await inspectArchive(blob, signal), signal)) throw new Error('書き出したZIPの再検証に失敗しました');

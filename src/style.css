@@ -720,3 +720,24 @@ body[data-map-photo-group="true"] #photos-panel :is(.photo-list-toolbar, #photo-
 .backup-capacity { grid-column: 1 / -1; overflow-wrap: anywhere; }
 .backup-capacity > p { margin: .35rem 0; }
 .backup-capacity details { margin: .25rem 0; }
+
+.trash-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem .8rem; padding: .65rem 0; border-bottom: 1px solid var(--line); }
+.trash-item > span { min-width: 0; overflow-wrap: anywhere; }
+.trash-item .row { flex-wrap: wrap; margin: 0; }
+.trash-item button, #trash-delete-dialog button, #trash-delete-dialog summary { min-height: 44px; }
+.trash-delete-open { color: #8a3f32; }
+#trash-delete-dialog { box-sizing: border-box; width: min(480px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: hidden; padding: 1rem; border: 1px solid var(--line); border-radius: .9rem; color: #263730; overflow-wrap: anywhere; }
+#trash-delete-dialog[open] { display: flex; flex-direction: column; }
+#trash-delete-dialog > h2, #trash-delete-name, #trash-delete-summary, #trash-delete-dialog > .row { flex: none; }
+#trash-delete-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: .2rem 0; font-weight: 600; }
+.trash-delete-body { min-height: 0; overflow: auto; }
+#trash-delete-dialog::backdrop { background: #18352980; }
+#trash-delete-dialog h2 { margin-top: 0; font-size: 1.15rem; }
+#trash-delete-dialog p { line-height: 1.6; }
+#trash-delete-dialog label { display: block; margin-top: .8rem; }
+#trash-delete-dialog input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; margin: .4rem 0; }
+#trash-delete-dialog .row { flex-wrap: wrap; justify-content: flex-end; margin-top: 1rem; }
+#trash-delete-dialog details { margin-top: .6rem; font-size: .85rem; }
+#trash-delete-dialog summary { cursor: pointer; align-content: center; }
+#trash-delete-commit { background: #9b4234; color: #fff; border-color: #9b4234; }
+#trash-delete-commit:disabled { opacity: .5; }

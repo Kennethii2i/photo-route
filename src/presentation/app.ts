@@ -20,6 +20,7 @@ import { displayCaptureClock } from './date-display';
 import { backupCapacityText, backupCapacitySummary } from './backup-capacity';
 import { PhotoCorrectionDrafts, type CorrectionFields } from './photo-correction-draft';
 import { createBasemapControl } from './basemap-control';
+import { createTrashDeletionDialog } from './trash-deletion-dialog';
 
 const element = <T extends HTMLElement>(selector: string): T => {
   const found = document.querySelector<T>(selector);
@@ -51,7 +52,7 @@ export async function startApp(): Promise<void> {
       onVersionChange: () => {
         errors.clearDb('blocked'); errors.showDb('closed', reloadGuide('別のタブで保存領域が更新されました', '接続を閉じました。未保存の内容を確認してから再読み込みしてください。'));
         const disableWrites = () => {
-          for (const control of document.querySelectorAll<HTMLButtonElement>('button[type="submit"], #header-add, #header-trips, #trip-management-select, #trip-management-create, #trip-trash, #trip-select, #visit-save, #vpe-save, #pae-save, #trash-commit, #trip-create-submit, #import-button, #restore-button, #restore-copy, #export-button, #stream-export-button, #trash-list button, form[aria-label="GPS補正"] button, form[aria-label="撮影日時補正"] button')) if (!control.disabled) control.disabled = true;
+          for (const control of document.querySelectorAll<HTMLButtonElement>('button[type="submit"], #header-add, #header-trips, #trip-management-select, #trip-management-create, #trip-trash, #trip-select, #visit-save, #vpe-save, #pae-save, #trash-commit, #trash-delete-commit, #trip-create-submit, #import-button, #restore-button, #restore-copy, #export-button, #stream-export-button, #trash-list button, form[aria-label="GPS補正"] button, form[aria-label="撮影日時補正"] button')) if (!control.disabled) control.disabled = true;
         };
         disableWrites(); new MutationObserver(disableWrites).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['disabled'] });
       },
@@ -576,6 +577,20 @@ export async function startApp(): Promise<void> {
     element<HTMLButtonElement>('#trash-commit').focus();
   }
 
+  const trashDeletionDialog = createTrashDeletionDialog({
+    db, errorText: message,
+    onBackup: () => layout.openManagement('archive'),
+    onUncertain: text => { recoveryStatus.textContent = text; },
+    onDeleted: async plan => {
+      const removedVisit = (id: string | null) => id !== null && (plan.kind === 'visit' ? id === plan.id : plan.kind === 'trip' && visits.some(item => item.id === id && item.tripId === plan.id));
+      if (removedVisit(focusedVisitId)) endVisitFocus(false);
+      if (removedVisit(selectedVisitId)) resetVisitForm();
+      if (selectedPhotoId && (plan.kind === 'photo' ? selectedPhotoId === plan.id : plan.kind === 'trip' && photos.some(item => item.id === selectedPhotoId && item.tripId === plan.id))) selectedPhotoId = null;
+      recoveryStatus.textContent = `「${plan.label}」を完全に削除しました。必要な場合は検証したZIPから復元してください。`;
+      await render(); await refreshBackupCapacity();
+    },
+  });
+
   async function renderRecovery(): Promise<void> {
     trashList.replaceChildren();
     const deleted = [
@@ -590,10 +605,16 @@ export async function startApp(): Promise<void> {
     if (!deleted.length) trashSection.open = false;
     if (!deleted.length) { const item = document.createElement('li'); item.textContent = 'ごみ箱は空です'; trashList.append(item); }
     for (const item of deleted) {
-      const row = document.createElement('li'); const button = document.createElement('button');
-      button.type = 'button'; button.textContent = `${item.label}を復元`;
+      const row = document.createElement('li'); row.className = 'trash-item'; row.dataset.trashId = item.id;
+      const label = document.createElement('span'); label.textContent = item.label;
+      const actions = document.createElement('div'); actions.className = 'row';
+      const button = document.createElement('button');
+      button.type = 'button'; button.textContent = '復元'; button.setAttribute('aria-label', `${item.label}を復元`);
       button.addEventListener('click', () => { void db.restoreFromTrash(item.kind, item.id).then(async () => { recoveryStatus.textContent = `${item.label}を復元しました`; await render(); }).catch(error => { recoveryStatus.textContent = `復元できません: ${message(error)}`; }); });
-      row.append(button); trashList.append(row);
+      const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '完全に削除'; remove.className = 'trash-delete-open';
+      remove.setAttribute('aria-label', `${item.label}を完全に削除`);
+      remove.addEventListener('click', () => layout.requestNavigation(() => trashDeletionDialog.open(item.kind, item.id, remove), true));
+      actions.append(button, remove); row.append(label, actions); trashList.append(row);
     }
   }
 

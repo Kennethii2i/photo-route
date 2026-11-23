@@ -1,4 +1,6 @@
 import { photoAlbumLinkSchema, photoSchema, thumbnailMetaSchema, tripSchema, validateAlbumLinks, validateRelations, visitSchema, type Photo, type PhotoAlbumLink, type Thumbnail, type Trip, type Visit } from '../domain/model';
+import { trashDeletionContents, type TrashDeletionPlan } from './trash-deletion-plan';
+import { snapshotFingerprint, verifyExportArchive } from './archive';
 
 const DB_VERSION = 3;
 const B1_MEMBERSHIP_GUARD = '複数アルバム所属への移行中です。この操作はPhase B2以降で利用できます';
@@ -74,6 +76,14 @@ const complete = (tx: IDBTransaction) => new Promise<void>((resolve, reject) => 
   tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
   tx.onerror = () => reject(tx.error ?? new Error('IndexedDB transaction failed'));
 });
+const readSnapshot = async (tx: IDBTransaction): Promise<Snapshot> => {
+  const [trips, visits, photos, thumbnails, links] = await Promise.all([
+    request<Trip[]>(tx.objectStore('trips').getAll()), request<Visit[]>(tx.objectStore('visits').getAll()),
+    request<Photo[]>(tx.objectStore('photos').getAll()), request<Thumbnail[]>(tx.objectStore('thumbnails').getAll()),
+    request<PhotoAlbumLink[]>(tx.objectStore('photoAlbumLinks').getAll()),
+  ]);
+  return { trips, visits, photos, thumbnails, links };
+};
 const newestUndoable = (store: IDBObjectStore) => new Promise<RecoveryEntry | undefined>((resolve, reject) => {
   const cursor = store.openCursor(null, 'prev');
   cursor.onerror = () => reject(cursor.error ?? new Error('保存履歴を読み取れません'));
@@ -213,6 +223,9 @@ const undoLegacyEntry = async (tx: IDBTransaction, entry: LegacyRecoveryEntry): 
 };
 
 export class LibraryDb {
+  private readonly trashDeletions = new WeakMap<TrashDeletionPlan, {
+    snapshot: Snapshot; beforeHash: string | null; afterHash: string | null; attempted: boolean; verification: number;
+  }>();
   private constructor(private readonly db: IDBDatabase) {}
   static async open(name = 'photo-route-library', options: { onBlocked?: () => void; onVersionChange?: () => void } = {}): Promise<LibraryDb> {
     const opened = indexedDB.open(name, DB_VERSION);
@@ -342,7 +355,14 @@ export class LibraryDb {
   async createTrip(input: Trip): Promise<void> {
     const trip = tripSchema.parse(input);
     const tx = this.db.transaction('trips', 'readwrite'); const done = complete(tx);
-    tx.objectStore('trips').add(trip);
+    try {
+      const existing: Trip[] = await request(tx.objectStore('trips').getAll());
+      const duplicate = existing.find(item => item.name.trim() === trip.name);
+      if (duplicate) throw new Error(duplicate.deletedAt
+        ? '同じ名前の旅行がごみ箱にあります。ごみ箱から復元するか、別の名前を入力してください。'
+        : '同じ名前の旅行があります。別の名前を入力してください。');
+      tx.objectStore('trips').add(trip);
+    } catch (error) { tx.abort(); await done.catch(() => undefined); throw error; }
     await done;
   }
   async createVisit(input: Visit, photoIds: string[] = []): Promise<void> {
@@ -630,6 +650,88 @@ export class LibraryDb {
     } catch (error) { tx.abort(); await done.catch(() => undefined); throw error; }
     await done;
   }
+  async prepareTrashDeletion(kind: RecoveryKind, id: string): Promise<TrashDeletionPlan> {
+    const snapshot = await this.snapshot();
+    const { plan } = trashDeletionContents(snapshot, kind, id);
+    this.trashDeletions.set(plan, { snapshot, beforeHash: null, afterHash: null, attempted: false, verification: 0 });
+    return plan;
+  }
+  async verifyTrashDeletionBackup(plan: TrashDeletionPlan, archive: Blob, signal?: AbortSignal): Promise<void> {
+    const pending = this.trashDeletions.get(plan);
+    if (!pending || pending.attempted) throw new Error('削除の確認を最初からやり直してください。');
+    const generation = ++pending.verification;
+    pending.beforeHash = null; pending.afterHash = null;
+    await verifyExportArchive(pending.snapshot, archive, signal);
+    const beforeHash = await snapshotFingerprint(pending.snapshot, signal);
+    const afterHash = await snapshotFingerprint(trashDeletionContents(pending.snapshot, plan.kind, plan.id).remaining, signal);
+    if (signal?.aborted) throw new DOMException('検証を中断しました', 'AbortError');
+    if (generation !== pending.verification || pending.attempted) throw new Error('新しいZIPの検証結果を確認してください。');
+    pending.beforeHash = beforeHash; pending.afterHash = afterHash;
+  }
+  async permanentlyDeleteFromTrash(plan: TrashDeletionPlan): Promise<void> {
+    const pending = this.trashDeletions.get(plan);
+    if (!pending?.beforeHash || !pending.afterHash || pending.attempted)
+      throw new Error('最新のZIPを選び直して検証してから、削除を確認してください。');
+    pending.attempted = true;
+    const tx = this.db.transaction(['trips', 'visits', 'photos', 'thumbnails', 'photoAlbumLinks', 'jobs', 'recovery'], 'readwrite');
+    const done = complete(tx);
+    void done.catch(() => undefined);
+    // Hash immutable Blob bytes while this transaction holds every affected store.
+    // Queued IDB requests prevent auto-commit; writes resume in an IDB success callback.
+    let keepAlive = true;
+    let activeWork: (() => void) | null = null;
+    const pulse = () => {
+      if (!keepAlive) return;
+      try {
+        const next = tx.objectStore('trips').get(plan.id);
+        next.onsuccess = () => {
+          const work = activeWork; activeWork = null;
+          if (work) work();
+          pulse();
+        };
+        next.onerror = () => { keepAlive = false; };
+      } catch { keepAlive = false; }
+    };
+    pulse();
+    try {
+      const [current, jobs] = await Promise.all([readSnapshot(tx), request<ImportJob[]>(tx.objectStore('jobs').getAll())]);
+      if (await snapshotFingerprint(current) !== pending.beforeHash)
+        throw new Error('確認後に保存内容が変わりました。最新のZIPを保存し、削除の確認を最初からやり直してください。');
+      if (plan.kind === 'trip' && jobs.some(job => job.targetTripId === plan.id && job.state === 'running'))
+        throw new Error('この旅行への写真の取り込み中は完全に削除できません。取り込み状態を確認してください。');
+      const contents = trashDeletionContents(current, plan.kind, plan.id);
+      // Re-enter an IDB success callback: a crypto completion task is not an active IDB task.
+      await Promise.race([
+        new Promise<void>((resolve, reject) => {
+          activeWork = () => {
+            keepAlive = false;
+            try {
+              for (const link of contents.links) tx.objectStore('photoAlbumLinks').delete([link.albumId, link.photoId]);
+              for (const id of contents.thumbnailIds) tx.objectStore('thumbnails').delete(id);
+              for (const id of contents.photoIds) tx.objectStore('photos').delete(id);
+              for (const id of contents.albumIds) tx.objectStore('visits').delete(id);
+              for (const id of contents.tripIds) tx.objectStore('trips').delete(id);
+              resolve();
+            } catch (error) { reject(error); }
+          };
+        }),
+        done.then(() => { throw new Error('削除前に保存処理が終了しました。削除の確認をやり直してください。'); }),
+      ]);
+    } catch (error) {
+      keepAlive = false;
+      try { tx.abort(); } catch { /* A failed request may already have aborted it. */ }
+      await done.catch(() => undefined); throw error;
+    } finally { keepAlive = false; }
+    await done;
+  }
+  async trashDeletionStatus(plan: TrashDeletionPlan): Promise<'applied' | 'not-applied' | 'changed' | 'unknown'> {
+    const pending = this.trashDeletions.get(plan);
+    if (!pending?.beforeHash || !pending.afterHash) return 'unknown';
+    try {
+      const hash = await snapshotFingerprint(await this.snapshot());
+      return hash === pending.afterHash ? 'applied' : hash === pending.beforeHash ? 'not-applied' : 'changed';
+    } catch { return 'unknown'; }
+  }
   async undoLatest(expectedId?: string): Promise<RecoveryEntry> {
     const tx = this.db.transaction(['trips', 'visits', 'photos', 'photoAlbumLinks', 'recovery'], 'readwrite');
     const done = complete(tx);
@@ -693,12 +795,7 @@ export class LibraryDb {
   }
   async snapshot(): Promise<Snapshot> {
     const tx = this.db.transaction(['trips', 'visits', 'photos', 'thumbnails', 'photoAlbumLinks']);
-    const [trips, visits, photos, thumbnails, links] = await Promise.all([
-      request<Trip[]>(tx.objectStore('trips').getAll()), request<Visit[]>(tx.objectStore('visits').getAll()),
-      request<Photo[]>(tx.objectStore('photos').getAll()), request<Thumbnail[]>(tx.objectStore('thumbnails').getAll()),
-      request<PhotoAlbumLink[]>(tx.objectStore('photoAlbumLinks').getAll()),
-    ]);
-    return { trips, visits, photos, thumbnails, links };
+    return readSnapshot(tx);
   }
   async restoreNew(snapshot: RestoreSeed, signal?: AbortSignal): Promise<void> {
     if (snapshot.photos.some(photo => photo.visitId !== null)) throw new Error(B1_MEMBERSHIP_GUARD);
