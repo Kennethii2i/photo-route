@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StyleSpecification } from 'maplibre-gl';
-import { basemapStyleUrl, composeBasemap } from '../../src/infrastructure/basemap';
+import { basemaps, basemapStyleUrl, composeBasemap } from '../../src/infrastructure/basemap';
 import { worldBounds } from '../../src/presentation/map-bounds';
 
 const original: StyleSpecification = {
@@ -74,5 +74,49 @@ describe('world fit bounds', () => {
     expect(worldBounds([[-123, -10], [-70, -30]])).toEqual([[-123, -30], [-70, -10]]);
     expect(worldBounds([[-1, 0], [1, 1]])).toEqual([[-1, 0], [1, 1]]);
     expect(worldBounds([[180, 1], [-180, 5]])).toEqual([[180, 1], [180, 5]]);
+  });
+});
+
+describe('additional backgrounds', () => {
+  const transport: StyleSpecification = {
+    ...original,
+    layers: [
+      { id: 'land', type: 'background' },
+      { id: 'park', type: 'fill', source: 'names', 'source-layer': 'park', paint: { 'fill-color': '#d8e8c8' } },
+      { id: 'road_major_rail', type: 'line', source: 'names', 'source-layer': 'transportation',
+        filter: ['==', 'class', 'rail'], minzoom: 10, paint: { 'line-color': '#bbb', 'line-dasharray': [1, 2],
+          'line-width': ['interpolate', ['exponential', 1.4], ['zoom'], 14, .4, 15, .75, 20, 2] } },
+      { id: 'road_path_pedestrian', type: 'line', source: 'names', 'source-layer': 'transportation', minzoom: 14,
+        filter: ['in', 'class', 'path', 'pedestrian'], paint: { 'line-width': 2, 'line-dasharray': [1, 1] } },
+      { id: 'poi_transit', type: 'symbol', source: 'names', 'source-layer': 'poi', layout: { 'text-field': ['get', 'name'] } },
+    ],
+  };
+
+  it('keeps four basic maps and places all three additions behind more', () => {
+    expect(basemaps.filter(item => item.group === 'basic').map(item => item.id)).toEqual(['standard', 'satellite', 'terrain', 'muted']);
+    expect(basemaps.filter(item => item.group === 'more').map(item => item.id)).toEqual(['rail', 'outdoor', 'dark']);
+    expect(basemapStyleUrl('dark')).toBe('https://tiles.openfreemap.org/styles/dark');
+    expect(basemapStyleUrl('rail')).toBe(basemapStyleUrl('standard'));
+  });
+
+  it('emphasizes existing rail output stops without moving zoom inside an expression or changing filters', () => {
+    const before = structuredClone(transport), result = composeBasemap('rail', transport);
+    const rail = result.layers.find(layer => layer.id === 'road_major_rail');
+    if (rail?.type !== 'line') throw new Error('Expected rail line');
+    expect(rail.paint?.['line-width']).toEqual(['interpolate', ['exponential', 1.4], ['zoom'], 14, .4 * 1.8, 15, .75 * 1.8, 20, 2 * 1.8]);
+    expect(rail.filter).toEqual(['==', 'class', 'rail']); expect(rail.minzoom).toBe(10);
+    expect(rail.paint?.['line-dasharray']).toEqual([1, 2]);
+    expect(result.layers[3]).toEqual(transport.layers[3]);
+    expect(result.sources).toEqual(transport.sources); expect(transport).toEqual(before);
+  });
+
+  it('adds the existing terrain source under paths and keeps travel data unchanged', () => {
+    const result = composeBasemap('outdoor', transport);
+    const path = result.layers.find(layer => layer.id === 'road_path_pedestrian');
+    if (path?.type !== 'line') throw new Error('Expected path');
+    expect(path.paint?.['line-width']).toBe(3); expect(path.paint?.['line-dasharray']).toEqual([1, 1]);
+    expect(path.filter).toEqual(['in', 'class', 'path', 'pedestrian']); expect(path.minzoom).toBe(14);
+    expect(result.sources['world-elevation']).toEqual(composeBasemap('terrain', original).sources['world-elevation']);
+    expect(result.layers.findIndex(layer => layer.id === 'world-hillshade')).toBeLessThan(result.layers.findIndex(layer => layer.id === path.id));
   });
 });

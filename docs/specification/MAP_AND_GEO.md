@@ -89,3 +89,14 @@ source boundsは要求を制限する矩形で、厳密な国境や実画像の�
 今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`
 
 今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`
+
+
+## 2026-11-23 「もっと見る」の追加地図
+
+基本4種類を維持し、追加は鉄道/散策/ダークの3種類。鉄道は既存Libertyのrail/transit線と交通施設文字を強調、散策はpath/pedestrian・公園と従来の標高陰影を強調、ダークはOpenFreeMap Darkを使う。すべて地図データの表示上の選択であり、列車運行/公式路線図/ルート推定/通行可否データを追加しない。表示は地域と縮尺により異なり、Darkの施設ラベルは少ない。
+
+線幅は既知のzoom interpolateの出力stopか数値のみ拡大し、zoom式全体を乗算式で包まない。元filter/minzoom/dash/衝突制御/レイヤー順/出典を維持。散策もworld-elevationの画像成功と期限を確認する。[候補比較・計画・検証](../more-map-layers-2026-11-23.md)。
+
+今回追加地図変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
+
+今回追加地図の実装・検証の確認元Git HEAD: `4b7c4382f05f0cc1fab695c00b4870094ca4c7ab`

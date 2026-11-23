@@ -1,4 +1,4 @@
-import type { StyleSpecification } from 'maplibre-gl';
+import type { ExpressionSpecification, LineLayerSpecification, StyleSpecification } from 'maplibre-gl';
 
 /** O-03 is open: this local style makes no tile/style/font request and is not a provider choice. */
 export type BasemapConfig = { style: StyleSpecification | string; attribution: string | null; externalRequests: boolean };
@@ -15,18 +15,31 @@ export const openFreeMapTrial: BasemapConfig = {
   externalRequests: true,
 };
 
-export type BasemapId = 'standard' | 'satellite' | 'terrain' | 'muted';
+export type BasemapId = 'standard' | 'satellite' | 'terrain' | 'muted' | 'rail' | 'outdoor' | 'dark';
 export const regionalImagerySourceIds: readonly string[] = ['japan-imagery', 'us-imagery'];
 export const regionalImageryWarning = '一部の航空写真を取得できません。表示できる画像で続行しています。';
-export const basemaps: { id: BasemapId; label: string; description: string }[] = [
-  { id: 'standard', label: '標準', description: '地名・駅・施設を表示。掲載内容は地域と縮尺によります。' },
-  { id: 'satellite', label: '航空・衛星写真', description: '拡大時は日本の地理院写真・米国本土のUSGS航空写真を表示。対象外は世界衛星写真（EOX・2016年、約10m級）。撮影時期・精細さは地域で異なり、提供範囲内でも海面などが空白になる場合があります。' },
-  { id: 'terrain', label: '地形', description: '標高データの陰影で山や谷を表示。精度は地域によって異なります。' },
-  { id: 'muted', label: '淡色', description: '写真の分布が見やすい、控えめな地図です。' },
+export const basemaps: { id: BasemapId; group: 'basic' | 'more'; label: string; description: string; summary?: string }[] = [
+  { id: 'standard', group: 'basic', label: '標準', description: '地名・駅・施設を表示。掲載内容は地域と縮尺によります。' },
+  { id: 'satellite', group: 'basic', label: '航空・衛星写真', description: '拡大時は日本の地理院写真・米国本土のUSGS航空写真を表示。対象外は世界衛星写真（EOX・2016年、約10m級）。撮影時期・精細さは地域で異なり、提供範囲内でも海面などが空白になる場合があります。' },
+  { id: 'terrain', group: 'basic', label: '地形', description: '標高データの陰影で山や谷を表示。精度は地域によって異なります。' },
+  { id: 'muted', group: 'basic', label: '淡色', description: '写真の分布が見やすい、控えめな地図です。' },
+  { id: 'rail', group: 'more', label: '鉄道', summary: '地図に掲載された線路・駅などを強調。', description: '世界の地図に掲載された線路と駅などの交通施設を強調します。掲載状況は地域と縮尺によります。' },
+  { id: 'outdoor', group: 'more', label: '散策', summary: '地図の小道・歩道・公園と起伏を強調。', description: '世界の地図に掲載された小道・歩道・公園と、山や谷の陰影を見やすくします。道の掲載・通行状況や標高精度は地域で異なります。' },
+  { id: 'dark', group: 'more', label: 'ダーク', summary: '暗い背景で写真が見やすい地図。', description: '暗い背景で写真を見返す地図です。地名や施設の表示は標準より少なめです。' },
 ];
 
 export function basemapStyleUrl(id: BasemapId): string {
-  return `https://tiles.openfreemap.org/styles/${id === 'muted' ? 'positron' : 'liberty'}`;
+  return `https://tiles.openfreemap.org/styles/${id === 'muted' ? 'positron' : id === 'dark' ? 'dark' : 'liberty'}`;
+}
+
+type LineWidth = NonNullable<LineLayerSpecification['paint']>['line-width'];
+function scaleWidth(width: LineWidth, factor: number): LineWidth {
+  if (typeof width === 'number') return width * factor;
+  // Keep zoom at the top level. Wrapping a zoom expression in multiplication is invalid.
+  if (Array.isArray(width) && width[0] === 'interpolate' && JSON.stringify(width[2]) === '["zoom"]') {
+    return width.map((value, index) => index >= 4 && index % 2 === 0 && typeof value === 'number' ? value * factor : value) as ExpressionSpecification;
+  }
+  return width;
 }
 
 /** Compose display-only backgrounds; app photo/album sources are installed separately. */
@@ -53,7 +66,27 @@ export function composeBasemap(id: BasemapId, input: StyleSpecification): StyleS
     style.layers = [{ id: 'world-imagery', type: 'raster', source: 'world-imagery', paint: { 'raster-fade-duration': 0 } },
       ...regionalImagerySourceIds.map(source => ({ id: source, type: 'raster' as const, source, minzoom: 14, paint: { 'raster-fade-duration': 0 } })),
       ...style.layers.filter(layer => layer.type === 'symbol')];
-  } else if (id === 'terrain') {
+  }
+  if (id === 'rail' || id === 'outdoor') {
+    for (const layer of style.layers) {
+      if (layer.type === 'line') {
+        const rail = /^(tunnel|road|bridge)_(major|transit)_rail(_hatching)?$/.test(layer.id);
+        const path = /^(tunnel|road|bridge)_path_pedestrian(_casing)?$/.test(layer.id);
+        if (id === 'rail' && rail || id === 'outdoor' && path) {
+          layer.paint = { ...layer.paint };
+          if (!layer.id.endsWith('_casing')) layer.paint['line-color'] = id === 'rail' ? '#7b3f9f' : '#327746';
+          const width = scaleWidth(layer.paint['line-width'], id === 'rail' ? 1.8 : 1.5);
+          if (width !== undefined) layer.paint['line-width'] = width;
+        }
+      } else if (id === 'outdoor' && layer.type === 'fill' && layer.id === 'park') {
+        layer.paint = { ...layer.paint, 'fill-color': '#cbe3b3', 'fill-opacity': .65 };
+      } else if (layer.type === 'symbol') {
+        if (id === 'rail' && layer.id === 'poi_transit') layer.paint = { ...layer.paint, 'text-color': '#71338f', 'text-halo-color': '#ffffff' };
+        if (id === 'outdoor' && layer.id === 'highway-name-path') layer.paint = { ...layer.paint, 'text-color': '#28603a' };
+      }
+    }
+  }
+  if (id === 'terrain' || id === 'outdoor') {
     style.sources['world-elevation'] = {
       type: 'raster-dem', tileSize: 512, maxzoom: 12, encoding: 'terrarium',
       tiles: ['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'],

@@ -9,28 +9,36 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
   const panel = document.createElement('section'); panel.id = 'basemap-panel'; panel.hidden = true;
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-labelledby', 'basemap-heading');
   const heading = document.createElement('strong'); heading.id = 'basemap-heading'; heading.textContent = '地図の種類'; heading.className = 'sr-only';
+  const more = document.createElement('button'); more.type = 'button'; more.id = 'basemap-more';
+  more.title = 'もっと見る'; more.setAttribute('aria-label', 'もっと見る'); more.setAttribute('aria-expanded', 'false'); more.setAttribute('aria-controls', 'basemap-more-options');
+  const moreIcon = document.createElement('span'); moreIcon.textContent = '⋯'; moreIcon.setAttribute('aria-hidden', 'true');
+  const moreLabel = document.createElement('span'); moreLabel.textContent = 'もっと'; more.append(moreIcon, moreLabel);
+  const moreOptions = document.createElement('div'); moreOptions.id = 'basemap-more-options'; moreOptions.hidden = true;
   const choices = document.createElement('fieldset'); choices.className = 'basemap-choices';
   const legend = document.createElement('legend'); legend.className = 'sr-only'; legend.textContent = '背景地図'; choices.append(legend);
+  const extraChoices = document.createElement('fieldset'); extraChoices.className = 'basemap-extra-choices';
+  const extraLegend = document.createElement('legend'); extraLegend.textContent = '用途に合わせた地図・世界対応'; extraChoices.append(extraLegend);
   for (const item of basemaps) {
     const label = document.createElement('label'); label.className = 'basemap-card';
+    if (item.group === 'more') label.classList.add('basemap-extra-card');
     const input = document.createElement('input'); input.type = 'radio'; input.name = 'basemap'; input.value = item.id;
     input.setAttribute('aria-label', item.label); input.checked = item.id === 'standard';
     const preview = document.createElement('span'); preview.className = `basemap-preview basemap-${item.id}`; preview.setAttribute('aria-hidden', 'true');
     const name = document.createElement('span'); name.className = 'basemap-name'; name.textContent = item.id === 'satellite' ? '航空・衛星' : item.label;
-    const description = document.createElement('span'); description.textContent = item.description;
-    description.className = 'sr-only'; label.title = item.description;
+    const description = document.createElement('span'); description.textContent = item.summary ?? item.description;
+    description.className = item.group === 'more' ? 'basemap-extra-description' : 'sr-only'; label.title = item.description;
     description.id = `basemap-description-${item.id}`; input.setAttribute('aria-describedby', description.id);
     input.addEventListener('change', () => { if (input.checked) choose(item.id); });
-    label.append(input, preview, name, description); choices.append(label);
+    label.append(input, preview, name, description); (item.group === 'basic' ? choices : extraChoices).append(label);
   }
   const note = document.createElement('p'); note.className = 'basemap-note';
-  note.textContent = 'すべて無料・APIキー不要。標準・淡色はOpenFreeMap、航空・衛星写真はEOXと対象地域の国土地理院・USGS、地形はMapterhornへ通信します。閲覧地域やIPアドレス等が配信元へ伝わり得ます。写真・Exifは送信しません。';
+  note.textContent = 'すべて無料・APIキー不要。地図・地名はOpenFreeMap、航空・衛星写真はEOXと対象地域の国土地理院・USGS、地形と散策の陰影はMapterhornへ通信します。閲覧地域やIPアドレス等が配信元へ伝わり得ます。写真・Exifは送信しません。';
   const status = document.createElement('p'); status.id = 'basemap-load-status'; status.setAttribute('role', 'status');
   const retry = document.createElement('button'); retry.type = 'button'; retry.textContent = '再試行'; retry.hidden = true;
   let selected: BasemapId = 'standard'; retry.addEventListener('click', () => choose(selected));
   const info = document.createElement('details'); info.className = 'basemap-info';
   const infoHeading = document.createElement('summary'); infoHeading.title = '地図の詳細・出典';
-  const infoLabel = document.createElement('span'); infoLabel.className = 'sr-only'; infoLabel.textContent = '地図の詳細・出典';
+  const infoLabel = document.createElement('span'); infoLabel.textContent = '地図の詳細・出典';
   const infoIcon = document.createElement('span'); infoIcon.className = 'basemap-info-icon'; infoIcon.textContent = 'i'; infoIcon.setAttribute('aria-hidden', 'true');
   infoHeading.append(infoIcon, infoLabel);
   const selectedDescription = document.createElement('p'); selectedDescription.className = 'basemap-description'; selectedDescription.textContent = basemaps[0]!.description;
@@ -46,7 +54,8 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
   // The selector must be above the mobile photo preview, whose panel has its own stacking context.
   const infoBody = document.createElement('div'); infoBody.className = 'basemap-info-body'; infoBody.append(selectedDescription, note, credits);
   info.append(infoHeading, infoBody);
-  panel.append(heading, choices, status, retry, info); dock.append(toggle); container.append(dock); document.body.append(panel);
+  moreOptions.append(extraChoices, info);
+  panel.append(heading, choices, more, status, retry, moreOptions); dock.append(toggle); container.append(dock); document.body.append(panel);
   let pinned = false, hoverSuppressed = false;
   let hideTimer: ReturnType<typeof setTimeout> | null = null;
   const cancelHide = () => { if (hideTimer !== null) { clearTimeout(hideTimer); hideTimer = null; } };
@@ -59,7 +68,7 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
     panel.style.bottom = `${innerHeight - anchor.top + 6}px`;
     panel.style.maxWidth = mobile ? 'calc(100vw - 20px)' : 'calc(100vw - 24px)';
     // Compact chooser anchors above its button; expanded details may use the full safe viewport.
-    if (mobile && info.open) {
+    if (mobile && !moreOptions.hidden) {
       panel.style.top = '68px'; panel.style.bottom = 'auto';
       panel.style.maxHeight = 'calc(100dvh - 154px - env(safe-area-inset-bottom))';
     } else if (mobile && anchor.top < 240) {
@@ -67,15 +76,21 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
       panel.style.maxHeight = `${Math.max(130, innerHeight - anchor.bottom - 86)}px`;
     } else panel.style.maxHeight = `${Math.max(130, anchor.top - 80)}px`;
   };
+  const setMore = (expanded: boolean) => {
+    moreOptions.hidden = !expanded; more.setAttribute('aria-expanded', String(expanded));
+    if (!expanded) info.open = false;
+    position();
+  };
   const dismiss = (restoreFocus = true) => {
     if (panel.hidden) return false;
     cancelHide(); pinned = false; hoverSuppressed = dock.matches(':hover') || panel.matches(':hover');
     panel.hidden = true; toggle.setAttribute('aria-expanded', 'false');
-    info.open = false;
+    setMore(false);
     if (restoreFocus) toggle.focus({ preventScroll: true });
     return true;
   };
   const focusSelected = () => {
+    if (basemaps.find(item => item.id === selected)?.group === 'more') setMore(true);
     const input = panel.querySelector<HTMLInputElement>('input:checked');
     input?.focus({ preventScroll: true }); input?.closest('label')?.scrollIntoView({ block: 'nearest' });
   };
@@ -89,6 +104,14 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
   };
   toggle.addEventListener('click', () => {
     if (!panel.hidden && pinned) dismiss(); else open(true);
+  });
+  more.addEventListener('click', () => {
+    cancelHide(); beforeOpen(); pinned = true;
+    setMore(Boolean(moreOptions.hidden));
+    if (!moreOptions.hidden) {
+      const input = extraChoices.querySelector<HTMLInputElement>('input:checked') ?? extraChoices.querySelector<HTMLInputElement>('input');
+      input?.focus({ preventScroll: true });
+    } else more.focus({ preventScroll: true });
   });
   const canHover = (event: PointerEvent) => event.pointerType === 'mouse' && matchMedia('(hover: hover) and (pointer: fine)').matches;
   const hoverEnter = (event: PointerEvent) => { if (canHover(event)) { cancelHide(); open(false); } };
@@ -132,7 +155,11 @@ export function createBasemapControl(container: HTMLElement, choose: (id: Basema
     dismiss,
     update: (state: BasemapState) => {
       selected = state.id; dock.dataset.basemap = selected; dock.dataset.state = state.state;
-      for (const input of choices.querySelectorAll<HTMLInputElement>('input')) input.checked = input.value === selected;
+      for (const input of panel.querySelectorAll<HTMLInputElement>('input[name="basemap"]')) input.checked = input.value === selected;
+      const extraSelected = basemaps.find(item => item.id === selected)!.group === 'more';
+      more.dataset.selected = String(extraSelected);
+      more.title = extraSelected ? `もっと見る：${basemaps.find(item => item.id === selected)!.label}を選択中` : 'もっと見る';
+      more.setAttribute('aria-label', more.title);
       status.textContent = state.message; retry.hidden = state.state !== 'error' && state.message !== regionalImageryWarning;
       selectedDescription.textContent = basemaps.find(item => item.id === selected)!.description;
       togglePreview.className = `basemap-preview basemap-${selected}`;
