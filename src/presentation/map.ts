@@ -226,7 +226,7 @@ export class PhotoMap {
 
   onBasemapChange(listener: (state: BasemapState) => void): void { this.basemapListener = listener; listener(this.basemapState); }
   private requiredBackgroundSource(): string | null {
-    return this.basemapId === 'satellite' ? 'world-imagery' : this.basemapId === 'terrain' ? 'world-elevation' : null;
+    return this.basemapId === 'satellite' ? 'world-imagery' : this.basemapId === 'terrain' || this.basemapId === 'outdoor' ? 'world-elevation' : null;
   }
   private finishBasemapLoading(): void {
     if (!this.basemapStyleLoaded || this.requiredBackgroundSource() && !this.requiredBackgroundReady || this.basemapState.state === 'error') return;

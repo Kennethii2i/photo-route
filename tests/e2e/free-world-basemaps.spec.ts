@@ -268,6 +268,7 @@ test('middle-width drawers, short mobile previews and album banners leave contro
   expect(await selected.evaluate(input => {
     const box = input.getBoundingClientRect(); return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === input;
   })).toBe(true);
+  await page.locator('#basemap-more').click();
   await page.locator('.basemap-info > summary').click();
   await expect(page.locator('.basemap-credits')).toContainText('OpenStreetMap');
   await page.screenshot({ path: 'test-results/free-basemaps/preview-panel-320x568.png' });
@@ -325,14 +326,6 @@ test('mouse hover opens a compact chooser without focus, map changes or extra re
   const dock = await page.locator('#basemap-open').boundingBox();
   expect(dock!.width).toBe(60); expect(dock!.height).toBe(60);
   await expect(page.getByRole('button', { name: 'レイヤーを閉じる', exact: true })).toHaveCount(0);
-  const information = page.locator('.basemap-info > summary');
-  await expect(information).toHaveAccessibleName('地図の詳細・出典');
-  const infoBox = await information.boundingBox();
-  expect(infoBox!.width).toBeGreaterThanOrEqual(44); expect(infoBox!.height).toBeGreaterThanOrEqual(44);
-  await information.focus(); await page.keyboard.press('Enter');
-  await expect(page.locator('.basemap-note')).toBeVisible();
-  await page.keyboard.press('Enter'); await expect(page.locator('.basemap-note')).toBeHidden();
-  await page.locator('#photo-search').focus();
   await page.getByRole('radio', { name: '標準', exact: true }).hover();
   await page.waitForTimeout(300); await expect(page.locator('#basemap-panel')).toBeVisible();
   await page.mouse.move(800, 100); await expect(page.locator('#basemap-panel')).toBeHidden();
@@ -358,5 +351,67 @@ test('touch opens the same compact chooser without a hover prerequisite', async 
     await expect(page.locator('#basemap-control')).toHaveAttribute('data-basemap', 'standard');
     await page.locator('#basemap-open').click();
     await expect(page.locator('#basemap-panel')).toBeHidden();
+  } finally { await context.close(); }
+});
+
+test('more preserves the compact four and selects additional maps without changing photos or camera', async ({ page }) => {
+  const { traffic, unexpected } = await prepare(page);
+  await page.keyboard.press('Escape');
+  await page.locator('#photo-list [data-photo-id]').first().click();
+  const before = await snapshot(page), view = await camera(page), detail = await page.locator('#photo-detail').textContent();
+  await page.locator('#basemap-open').click();
+  await expect(page.getByRole('radio')).toHaveCount(4);
+  const requests = traffic.length;
+  await page.getByRole('button', { name: 'もっと見る', exact: true }).click();
+  await expect(page.locator('#basemap-more')).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('radio', { name: '鉄道', exact: true })).toBeFocused();
+  await expect(page.getByRole('radio', { name: '鉄道', exact: true })).not.toBeChecked();
+  expect(traffic.length).toBe(requests); expect(await camera(page)).toEqual(view);
+  await expect(page.locator('#basemap-control')).toHaveAttribute('data-basemap', 'muted');
+  for (const [name, id] of [['鉄道', 'rail'], ['散策', 'outdoor'], ['ダーク', 'dark']] as const) {
+    await page.getByRole('radio', { name, exact: true }).check();
+    await expect(page.locator('#basemap-control')).toHaveAttribute('data-state', 'ready');
+    await expect(page.locator('#basemap-control')).toHaveAttribute('data-basemap', id);
+    await expect(page.locator('#basemap-more')).toHaveAttribute('data-selected', 'true');
+    expect(await camera(page)).toEqual(view); expect(await page.locator('#photo-detail').textContent()).toBe(detail);
+  }
+  const info = page.locator('.basemap-info > summary');
+  await expect(info).toHaveAccessibleName('地図の詳細・出典');
+  await info.focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('.basemap-credits')).toContainText('OpenStreetMap');
+  await page.keyboard.press('Escape'); await expect(page.locator('#basemap-panel')).toBeHidden();
+  await expect(page.locator('#basemap-more')).toHaveAttribute('aria-expanded', 'false');
+  await page.mouse.move(800, 100); await page.locator('#basemap-open').hover();
+  await expect(page.getByRole('radio')).toHaveCount(4);
+  await page.locator('#basemap-open').click();
+  await expect(page.getByRole('radio', { name: 'ダーク', exact: true })).toBeFocused();
+  expect(await snapshot(page)).toEqual(before); expect(unexpected).toEqual([]);
+  expect(traffic.some(url => url === 'https://tiles.openfreemap.org/styles/dark')).toBe(true);
+});
+
+test('more remains usable on short touch screens and retries an additional style', async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, viewport: { width: 320, height: 568 } });
+  const page = await context.newPage();
+  try {
+    await prepare(page); await page.keyboard.press('Escape'); await page.locator('#mobile-tab-map').click();
+    await page.locator('#basemap-open').click(); await page.locator('#basemap-more').click();
+    let fail = true;
+    await page.route('https://tiles.openfreemap.org/styles/dark', route => fail ? route.fulfill({ status: 503, body: 'Synthetic unavailable' }) : route.fulfill({ json: fixtureStyle }));
+    await page.getByRole('radio', { name: 'ダーク', exact: true }).check();
+    await expect(page.locator('#basemap-control')).toHaveAttribute('data-state', 'error');
+    const view = await camera(page); fail = false;
+    await page.locator('#basemap-panel').getByRole('button', { name: '再試行', exact: true }).click();
+    await expect(page.locator('#basemap-control')).toHaveAttribute('data-state', 'ready');
+    expect(await camera(page)).toEqual(view);
+    const choice = page.getByRole('radio', { name: 'ダーク', exact: true });
+    await choice.scrollIntoViewIfNeeded();
+    expect(await choice.evaluate(input => { const box = input.getBoundingClientRect(); return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === input; })).toBe(true);
+    mkdirSync('test-results/more-basemaps', { recursive: true });
+    await page.screenshot({ path: 'test-results/more-basemaps/more-320x568.png' });
+    const info = page.locator('.basemap-info > summary');
+    const panelBox = await page.locator('#basemap-panel').boundingBox(), infoBox = await info.boundingBox();
+    expect(infoBox!.y + infoBox!.height).toBeLessThanOrEqual(panelBox!.y + panelBox!.height);
+    expect(infoBox!.height).toBeGreaterThanOrEqual(44);
+    await page.locator('#mobile-tab-photos').click(); await expect(page.locator('#basemap-panel')).toBeHidden();
   } finally { await context.close(); }
 });

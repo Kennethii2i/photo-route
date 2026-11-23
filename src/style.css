@@ -113,10 +113,24 @@ main > .panel:not(.map-panel) { display: none; }
 .basemap-satellite { background-color: #364e3c; background-image: linear-gradient(28deg, transparent 43%, #b2b29c 44% 47%, transparent 48%), repeating-linear-gradient(110deg, transparent 0 9px, #213b38 10px 17px, #66634d 18px 25px); }
 .basemap-terrain { background-color: #cad5bd; background-image: repeating-radial-gradient(ellipse at 20% 90%, transparent 0 5px, #657e6580 6px 7px, transparent 8px 13px), linear-gradient(120deg, #e1e5ce, #94a28c 55%, #eeecd9); }
 .basemap-muted { background-color: #eef1ec; background-image: linear-gradient(30deg, transparent 38%, white 39% 47%, #d1d8d2 48% 50%, transparent 51%), linear-gradient(100deg, transparent 42%, #fff 43% 51%, transparent 52%), linear-gradient(145deg, transparent 48%, #ccdfe2 49% 62%, transparent 63%); }
+.basemap-rail { background-color: #f0eaf2; background-image: repeating-linear-gradient(28deg, transparent 0 8px, #86499d 9px 11px, transparent 12px 22px), linear-gradient(100deg, transparent 38%, white 39% 54%, transparent 55%); }
+.basemap-outdoor { background-color: #dce8cf; background-image: repeating-radial-gradient(ellipse at 10% 95%, transparent 0 6px, #8ca87a 7px 8px, transparent 9px 15px), linear-gradient(115deg, transparent 42%, #3c8453 43% 48%, transparent 49%); }
+.basemap-dark { background-color: #253139; background-image: linear-gradient(30deg, transparent 39%, #788a93 40% 44%, transparent 45%), linear-gradient(105deg, transparent 42%, #62747e 43% 48%, transparent 49%); }
 .basemap-card:has(input:checked) { border-color: #327d63; background-color: #edf5ef; }
 .basemap-card:has(input:focus-visible) { outline: 2px solid #236e5b; outline-offset: 2px; }
-.basemap-info { margin: 0; font-size: .75rem; color: var(--muted); }
-.basemap-info > summary { position: absolute; right: 6px; top: 14px; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; min-height: 44px; border-radius: 7px; list-style: none; cursor: pointer; }
+#basemap-more { position: absolute; right: 6px; top: 14px; display: grid; align-content: center; justify-items: center; gap: 1px; width: 44px; height: 44px; min-height: 44px; padding: 0; border-color: transparent; font-size: .68rem; line-height: 1.1; }
+#basemap-more > span:first-child { font-size: 20px; line-height: 12px; }
+#basemap-more[data-selected="true"] { border-color: #327d63; background: #edf5ef; }
+#basemap-more-options[hidden] { display: none; }
+#basemap-more-options { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 8px; }
+.basemap-extra-choices { margin: 0; padding: 0; border: 0; min-width: 0; display: grid; gap: 5px; }
+.basemap-extra-choices legend { padding: 0 0 6px; font-size: .78rem; color: #52675c; }
+.basemap-extra-card { grid-template-columns: 44px minmax(0, 1fr); gap: 3px 9px; justify-items: start; padding: 7px; }
+.basemap-extra-card .basemap-preview { grid-row: 1 / span 2; align-self: center; }
+.basemap-extra-card .basemap-name { font-size: .85rem; }
+.basemap-extra-description { grid-column: 2; font-size: .74rem; font-weight: 400; line-height: 1.5; color: #52675c; }
+.basemap-info { margin: 6px 0 0; border-top: 1px solid var(--line); font-size: .75rem; color: var(--muted); }
+.basemap-info > summary { display: flex; gap: 7px; align-items: center; width: 100%; min-height: 44px; padding: 0 4px; border-radius: 7px; list-style: none; cursor: pointer; }
 .basemap-info > summary::-webkit-details-marker { display: none; }
 .basemap-info > summary:hover, .basemap-info[open] > summary { background: #edf5ef; color: #236e5b; }
 .basemap-info > summary:focus-visible { outline: 2px solid #236e5b; outline-offset: -2px; }

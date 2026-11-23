@@ -58,3 +58,12 @@ Photo Route本体のコードは[MIT](LICENSE)です。この許諾は、権利�
 今回地域画像変更前基準Git HEAD: `1fdcb271c166a8fed98238bab63f039110290e65`
 
 今回地域画像の実装・検証の確認元Git HEAD: `7199cdc7329960b059946a216bcead6e50d46cbd`
+
+
+## 「もっと見る」の3地図（2026-11-23）
+
+鉄道/散策は取得したOpenFreeMap Libertyの表示をPhoto Routeが用途別に調整する。元データ・帰属・元styleの条件を維持し、styleファイル/タイルを同梱しない。散策の標高は従来のMapterhorn条件を引き継ぐ。
+
+Darkは[OpenFreeMap公式style](https://openfreemap.org/quick_start/)と[公開fork](https://github.com/hyperknot/openfreemap-styles)を実行時に利用する。元となる[Dark Matterの許諾](https://github.com/openmaptiles/dark-matter-gl-style/blob/master/LICENSE.md)はコードBSD-3-Clause、デザインCC BY 4.0、CartoDB/Stamen/Paul Norman由来部分CC BY 3.0。地図上のOpenMapTiles/OpenStreetMap等の実際の帰属を維持し、本体MITへ置き換えない。
+
+今回追加地図変更前基準Git HEAD: `7d24340be57d17bbec6237de5df252fef71bb549`
