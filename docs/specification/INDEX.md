@@ -117,3 +117,9 @@
 今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`
 
 今回旅行名・完全削除の実装・検証の確認元Git HEAD: `3e1a03b99e48a8d32bf1d5e7ffd2fca2fdd0192a`
+
+## 旅行名・完全削除のmain統合確認
+
+[2026-11-23の承認範囲・バックアップ・統合検証](../trip-trash-safety-main-integration-2026-11-23.md)。安全策を維持したローカルmainへのFast-forward統合が対象で、Push/公開は含まない。
+
+統合対象の確認元Git HEAD: `6f142e729f458627c5655fea9b9597e80d994855`

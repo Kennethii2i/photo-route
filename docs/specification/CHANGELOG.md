@@ -142,3 +142,9 @@ P2.2: 独立した公開用初期履歴、本体コードのMIT採用、第三�
 今回変更前基準Git HEAD: `cf8d38afa6fb022154a84e9d983bcac6e28c5551`
 
 今回旅行名・完全削除の実装・検証の確認元Git HEAD: `3e1a03b99e48a8d32bf1d5e7ffd2fca2fdd0192a`
+
+## 2026-11-23 旅行名・完全削除のmain統合承認
+
+所有者が必要確認後のローカルmain統合を明示指示。新規旅行名の重複防止、ZIP再選択・検証付きの個別完全削除と確認画面を、バックアップ参照と別worktreeでFast-forward統合する。[承認・検証・復旧条件](../trip-trash-safety-main-integration-2026-11-23.md)。Push/公開・実DB操作は含まない。
+
+統合対象の確認元Git HEAD: `6f142e729f458627c5655fea9b9597e80d994855`
